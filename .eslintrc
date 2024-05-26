@@ -5,6 +5,7 @@
     },
     "extends": [
         "airbnb",
+        "airbnb/hooks",
         "eslint:recommended",
         "plugin:react/recommended",
         "plugin:@typescript-eslint/recommended",
@@ -20,7 +21,8 @@
     },
     "plugins": [
         "@typescript-eslint",
-        "react"
+        "react",
+        "prettier"
     ],
     "rules": {
         "react/react-in-jsx-scope": 0
