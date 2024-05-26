@@ -13,8 +13,8 @@ export default function Home() {
       setIsConnected(true);
       setTransport(socket.io.engine.transport.name);
 
-      socket.io.engine.on('upgrade', (transport) => {
-        setTransport(transport.name);
+      socket.io.engine.on('upgrade', (trans) => {
+        setTransport(trans.name);
       });
     }
 
@@ -29,15 +29,15 @@ export default function Home() {
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
-    socket.on('res', (data) => {
-      setData(data);
+    socket.on('res', (resData) => {
+      setData(resData);
     });
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
     };
-  }, [socket]);
+  }, []);
 
   return (
     <div>
