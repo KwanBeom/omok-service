@@ -1,47 +1,42 @@
-import { BLACK_STONE, WHITE_STONE } from './Stone';
-
 export const EMPTY = null;
 
-export class Board {
-  #board = Array.from({ length: 15 }, () => new Array(15).fill(EMPTY));
+/**
+ * 오목판 클래스
+ */
+// 제네릭으로 오목판 cell의 인스턴스의 형태를 타입스크립트가 추론하도록 함
+export class Board<T> {
+  #MAX = 15;
+
+  #MIN = 0;
+
+  #board: T[][] = Array.from({ length: this.#MAX }, () =>
+    new Array(this.#MAX).fill(EMPTY),
+  );
 
   /**
-   * 돌 보드에 놓는 메서드
-   * @param x 열
-   * @param y 행
+   * 보드에 돌을 착수하는 메서드
+   * @param row 열
+   * @param col 행
    * @param stone 놓아질 돌
    */
-  dropStone(x: number, y: number, stone: unknown) {
-    this.#board[x][y] = stone;
+  dropStone(row: number, col: number, stone: T) {
+    if (
+      row < this.#MIN ||
+      row > this.#MAX ||
+      col < this.#MIN ||
+      col > this.#MAX
+    ) {
+      throw new Error('올바르지 않은 착수 위치입니다');
+    }
+
+    if (this.#board[row][col] !== EMPTY) {
+      throw new Error('이미 돌이 놓여진 자리입니다');
+    }
+
+    this.#board[row][col] = stone;
   }
 
   get() {
     return this.#board;
   }
-
-  // TODO: 디버깅용 메서드, 삭제 필요
-  view() {
-    type Cell = typeof BLACK_STONE | typeof WHITE_STONE | typeof EMPTY;
-
-    const board = this.#board
-      .map((row) =>
-        row
-          .map((cell: Cell) => {
-            if (cell === BLACK_STONE) return '⚫️';
-            if (cell === WHITE_STONE) return '⚪️';
-            return 'x';
-          })
-          .join(' '),
-      )
-      .join('\n');
-
-    console.log(board);
-  }
 }
-const board = new Board();
-
-board.dropStone(7, 7, BLACK_STONE);
-board.dropStone(0, 0, WHITE_STONE);
-board.dropStone(7, 8, BLACK_STONE);
-board.dropStone(0, 1, WHITE_STONE);
-board.view();
