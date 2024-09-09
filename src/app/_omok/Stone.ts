@@ -1,18 +1,24 @@
-export type StoneColor = 'black' | 'white';
-export const POINT = { BLACK: 1, WHITE: 2 };
+export type StoneColor = 'BLACK' | 'WHITE';
+
+export type StonePoint = 1 | 2;
+
+export const STONE_POINT: { [key in StoneColor]: StonePoint } = {
+  BLACK: 1,
+  WHITE: 2,
+} as const;
 
 export default class Stone {
-  color;
+  #color;
 
   constructor(color: StoneColor) {
-    this.color = color;
+    this.#color = color;
   }
 
   /**
-   * 승리조건 계산을 위한 돌 점수 반환
+   * 돌 점수 반환
    * @returns 흑돌이면 1 백돌이면 2
    */
   getPoint() {
-    return this.color === 'black' ? POINT.BLACK : POINT.WHITE;
+    return this.#color === 'BLACK' ? STONE_POINT.BLACK : STONE_POINT.WHITE;
   }
 }

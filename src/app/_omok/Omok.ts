@@ -1,14 +1,18 @@
-import { Board } from './Board';
+import Board from './Board';
+import RenjuRule, { RenjuGeumsu } from './RenjuRule';
 import Stone, { StoneColor } from './Stone';
+import { Position } from './types';
 
-export default class Omok {
-  #turn: StoneColor = 'black';
+class Omok {
+  #turn: StoneColor = 'BLACK';
 
   #board;
 
+  #rule = new RenjuRule();
+
   #count = 0;
 
-  #prevPos = { row: 0, col: 0 };
+  #prevPos: Position = [0, 0];
 
   constructor() {
     this.#board = new Board<Stone>();
@@ -21,27 +25,15 @@ export default class Omok {
    */
   play(row: number, col: number) {
     this.#board.dropStone(row, col, new Stone(this.#turn));
+    this.#rule.apply(this.#board.get(), [row, col], this.#count);
     this.#switchPlayer();
-    this.#prevPos = { row, col };
+    this.#prevPos = [row, col];
   }
 
-  // TODO: 디버깅 메소드, 삭제 필요
-  view() {
-    const board = this.#board
-      .get()
-      .map((row) =>
-        row
-          .map((stone) => {
-            const point = stone?.getPoint() || stone;
-            if (point === 1) return '⚫️';
-            if (point === 2) return '⚪️';
-            return '⭕️';
-          })
-          .join(''),
-      )
-      .join('\n');
-
-    console.log(board);
+  // TODO: 디버깅용 메서드, 삭제 필요
+  dropStone(row: number, col: number, color: StoneColor) {
+    this.#board.dropStone(row, col, new Stone(color));
+    this.#rule.apply(this.#board.get(), [row, col], this.#count);
   }
 
   /**
@@ -84,30 +76,80 @@ export default class Omok {
       );
     }
 
-    const result = check(this.#prevPos.row, this.#prevPos.col, 0, point);
+    const result = check(this.#prevPos[0], this.#prevPos[1], 0, point);
 
     return result;
   }
 
+  /** 금수 위치 반환 */
+  getGeumsu(): RenjuGeumsu {
+    return this.#rule.getGeumsu();
+  }
+
   /**
-   * 다음 턴 실행
+   * 플레이어 변경, = 다음턴 진행
    */
   #switchPlayer() {
-    this.#turn = this.#turn === 'black' ? 'white' : 'black';
+    this.#turn = this.#turn === 'BLACK' ? 'WHITE' : 'BLACK';
     this.#count += 1;
+  }
+
+  // TODO: 삭제 필
+  getBoard() {
+    return this.#board.get();
   }
 }
 
 const omok = new Omok();
 
-omok.play(0, 0);
-omok.play(7, 7);
-omok.play(0, 1);
-omok.play(7, 8);
-omok.play(0, 2);
-omok.play(7, 9);
-omok.play(0, 3);
-omok.play(7, 10);
+const pos = [
+  [7, 7],
+  [0, 0],
+  [7, 8],
+  [0, 1],
+  [7, 9],
+  [0, 2],
+  [7, 5],
+  [0, 14],
+  [7, 4],
+  [0, 13],
+  [6, 10],
+  [0, 12],
+  [9, 7],
+  [0, 10],
+  [10, 6],
+  [0, 9],
+  [11, 5],
+  [0, 8],
+  [8, 5],
+  [0, 6],
+  [9, 5],
+  [0, 5],
+  [6, 5],
+  [1, 14],
+  [13, 9],
+  [2, 14],
+  [13, 14],
+  [1, 0],
+  [13, 10],
+  [2, 0],
+  [13, 13],
+  [1, 2],
+  [13, 11],
+];
 
-omok.view();
-console.log(omok.checkWin());
+for (let i = 0; i < pos.length; i += 1) {
+  const [row, col] = pos[i];
+  omok.play(row, col);
+}
+
+omok.dropStone(7, 14, 'BLACK');
+omok.dropStone(8, 13, 'BLACK');
+omok.dropStone(9, 12, 'BLACK');
+
+omok.dropStone(11, 10, 'BLACK');
+omok.dropStone(12, 9, 'BLACK');
+
+console.log(omok.getGeumsu());
+
+export default Omok;
