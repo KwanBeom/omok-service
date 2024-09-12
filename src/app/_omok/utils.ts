@@ -21,28 +21,43 @@ export function isValidStonePosition(position: Position) {
   );
 }
 
-/** 돌 갯수 세는 함수 */
+/** 한 방향으로 돌 갯수 세는 함수 */
 export function countStones(
   board: StoneBoard,
   position: Position,
   direction: Position,
   target: StonePoint,
-) {
-  const check = (p: Position, d: Position, count: number): number => {
-    if (board[p[0]][p[1]]?.getPoint() !== target) {
-      return count;
-    }
+): number {
+  let count = 0;
+  let [x, y] = position;
 
-    const [nx, ny] = [p[0] + d[0], p[1] + d[1]];
+  while (isValidStonePosition([x, y]) && board[x][y]?.getPoint() === target) {
+    count += 1;
 
-    if (!isValidStonePosition([nx, ny])) {
-      return count;
-    }
+    x += direction[0];
+    y += direction[1];
+  }
 
-    return check([nx, ny], d, count + 1);
-  };
+  return count;
+}
 
-  return check(position, direction, 0);
+/** 양 방향으로 돌 갯수 세는 함수 */
+export function countStonesInBothDirections(
+  board: StoneBoard,
+  position: Position,
+  direction: Position,
+  target: StonePoint,
+): number {
+  let total = 0;
+  const [dx, dy] = direction;
+
+  // 정방향 돌 세기
+  total += countStones(board, position, [dx, dy], target);
+  // 반대 방향 돌 세기
+  total += countStones(board, position, [-dx, -dy], target);
+
+  // countStones 함수가 1부터 카운팅하기 때문에 -1
+  return total - 1;
 }
 
 // TODO: 디버깅 메소드, 삭제 필요
