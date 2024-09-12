@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import OmokGame from '@/components/OmokGame';
 import socket from '../socket';
 
 export default function Home() {
@@ -40,18 +41,19 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
-      <p>Status: {isConnected ? 'connected' : 'disconnected'}</p>
-      <p>Transport: {transport}</p>
-      <button
-        type="button"
-        onClick={() => {
-          socket.emit('abc', 'world');
-        }}
-      >
-        emit
-      </button>
-      {data}
-    </div>
+    // <div>
+    //   <p>Status: {isConnected ? 'connected' : 'disconnected'}</p>
+    //   <p>Transport: {transport}</p>
+    //   <button
+    //     type="button"
+    //     onClick={() => {
+    //       socket.emit('abc', 'world');
+    //     }}
+    //   >
+    //     emit
+    //   </button>
+    //   {data}
+    // </div>
+    <OmokGame />
   );
 }

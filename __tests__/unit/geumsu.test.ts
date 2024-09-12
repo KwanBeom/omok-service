@@ -1,10 +1,11 @@
 import Omok from '@/app/_omok/Omok';
+import { Position } from '@/app/_omok/types';
 
 describe('금수 테스트', () => {
   test('장목(6목) 테스트', () => {
     const omok = new Omok();
 
-    const pos = [
+    const pos: Position[] = [
       [7, 7],
       [0, 0],
       [7, 8],
@@ -41,8 +42,7 @@ describe('금수 테스트', () => {
     ];
 
     for (let i = 0; i < pos.length; i += 1) {
-      const [row, col] = pos[i];
-      omok.play(row, col);
+      omok.play(pos[i]);
     }
 
     expect(omok.getGeumsu().jangmok).toEqual([

@@ -1,39 +1,36 @@
 import Board from './Board';
 import RenjuRule, { RenjuGeumsu } from './RenjuRule';
-import Stone, { StoneColor } from './Stone';
+import Stone, { POINT_BLACK, POINT_WHITE, StoneColor } from './Stone';
 import { Position } from './types';
+import { changeStoneToPoint, countStones, isValidStonePosition } from './utils';
 
 class Omok {
-  #turn: StoneColor = 'BLACK';
-
-  #board;
-
-  #rule = new RenjuRule();
-
-  #count = 0;
+  #turn: StoneColor = 'black';
 
   #prevPos: Position = [0, 0];
 
+  #board;
+
+  #rule;
+
+  #count;
+
   constructor() {
     this.#board = new Board<Stone>();
+    this.#rule = new RenjuRule();
+    this.#count = 0;
   }
 
   /**
-   * x행 y열 위치에 돌을 착수하고 다음 턴으로 넘기는 메서드
-   * @param x 행 번호
-   * @param y 열 번호
+   * position 위치에 돌을 착수하고 다음 턴으로 넘기는 메서드
    */
-  play(row: number, col: number) {
+  play(position: Position) {
+    const [row, col] = position;
+
     this.#board.dropStone(row, col, new Stone(this.#turn));
     this.#rule.apply(this.#board.get(), [row, col], this.#count);
     this.#switchPlayer();
     this.#prevPos = [row, col];
-  }
-
-  // TODO: 디버깅용 메서드, 삭제 필요
-  dropStone(row: number, col: number, color: StoneColor) {
-    this.#board.dropStone(row, col, new Stone(color));
-    this.#rule.apply(this.#board.get(), [row, col], this.#count);
   }
 
   /**
@@ -47,38 +44,54 @@ class Omok {
    * 승리 여부 확인 메서드
    */
   checkWin() {
+    if (this.#count < 9) return false;
+
+    const direction: Position[] = [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ];
+
     // 진행된 수가 홀수이면 흑돌, 짝수이면 백돌
-    const point = (this.#count % 3) + 1;
-    const pointBoard = this.#board
-      .get()
-      .map((row) => row.map((stone) => stone?.getPoint()));
+    const target = this.#count % 2 === 0 ? POINT_WHITE : POINT_BLACK;
+    const pointBoard = changeStoneToPoint(this.#board.get());
+    const board = this.#board.get();
+    const prev = this.#prevPos;
 
     // 승리 체크 함수
-    function check(
-      row: number,
-      col: number,
-      count: number,
-      target: number,
-    ): boolean {
-      if (row < 0 || row >= 15 || col < 0 || col >= 15) return false;
-      if (pointBoard[row][col] !== target) return false;
+    function check(p: Position, d: Position, count: number): boolean {
       if (count === 5) return true;
 
-      return (
-        check(row + 1, col, count + 1, target) || // 아래
-        check(row - 1, col, count + 1, target) || // 위
-        check(row, col + 1, count + 1, target) || // 오른쪽
-        check(row, col - 1, count + 1, target) || // 왼쪽
-        check(row + 1, col + 1, count + 1, target) || // 아래 오른쪽 대각선
-        check(row - 1, col - 1, count + 1, target) || // 위 왼쪽 대각선
-        check(row + 1, col - 1, count + 1, target) || // 아래 왼쪽 대각선
-        check(row - 1, col + 1, count + 1, target) // 위 오른쪽 대각선
-      );
+      const [nx, ny] = [p[0] + d[0], p[1] + d[1]];
+
+      if (isValidStonePosition([nx, ny]) && pointBoard[nx][ny] === target) {
+        if (count === 1) {
+          const reverseDirection: Position = [-d[0], -d[1]];
+          // 반대편 돌 세기
+          const osc = countStones(board, prev, reverseDirection, target);
+          console.log(osc);
+
+          return check([nx, ny], d, osc + count + 1);
+        }
+
+        return check([nx, ny], d, count + 1);
+      }
+
+      return false;
     }
 
-    const result = check(this.#prevPos[0], this.#prevPos[1], 0, point);
+    for (let i = 0; i < direction.length; i += 1) {
+      if (check(this.#prevPos, direction[i], 1)) {
+        return true;
+      }
+    }
 
-    return result;
+    return false;
   }
 
   /** 금수 위치 반환 */
@@ -90,66 +103,13 @@ class Omok {
    * 플레이어 변경, = 다음턴 진행
    */
   #switchPlayer() {
-    this.#turn = this.#turn === 'BLACK' ? 'WHITE' : 'BLACK';
+    this.#turn = this.#turn === 'black' ? 'white' : 'black';
     this.#count += 1;
   }
 
-  // TODO: 삭제 필
   getBoard() {
     return this.#board.get();
   }
 }
-
-const omok = new Omok();
-
-const pos = [
-  [7, 7],
-  [0, 0],
-  [7, 8],
-  [0, 1],
-  [7, 9],
-  [0, 2],
-  [7, 5],
-  [0, 14],
-  [7, 4],
-  [0, 13],
-  [6, 10],
-  [0, 12],
-  [9, 7],
-  [0, 10],
-  [10, 6],
-  [0, 9],
-  [11, 5],
-  [0, 8],
-  [8, 5],
-  [0, 6],
-  [9, 5],
-  [0, 5],
-  [6, 5],
-  [1, 14],
-  [13, 9],
-  [2, 14],
-  [13, 14],
-  [1, 0],
-  [13, 10],
-  [2, 0],
-  [13, 13],
-  [1, 2],
-  [13, 11],
-];
-
-for (let i = 0; i < pos.length; i += 1) {
-  const [row, col] = pos[i];
-  omok.play(row, col);
-}
-
-omok.dropStone(7, 14, 'BLACK');
-omok.dropStone(8, 13, 'BLACK');
-omok.dropStone(9, 12, 'BLACK');
-
-omok.dropStone(11, 10, 'BLACK');
-omok.dropStone(12, 9, 'BLACK');
-
-console.log(omok.getGeumsu());
 
 export default Omok;

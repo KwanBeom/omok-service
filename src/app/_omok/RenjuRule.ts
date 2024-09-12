@@ -1,5 +1,5 @@
 import { EMPTY } from './Board';
-import { STONE_POINT } from './Stone';
+import { POINT_BLACK, POINT_WHITE } from './Stone';
 import { Position, StoneBoard } from './types';
 import { countStones, isValidStonePosition } from './utils';
 
@@ -66,7 +66,7 @@ class RenjuRule {
       }
 
       // 흑돌이 아닌 경우
-      if (board[nx][ny]?.getPoint() === STONE_POINT.WHITE) {
+      if (board[nx][ny]?.getPoint() === POINT_WHITE) {
         return undefined;
       }
 
@@ -90,7 +90,7 @@ class RenjuRule {
 
         // 반대 방향 돌 갯수 세기 ..
         if (isValidStonePosition([rX, rY])) {
-          osc = countStones(board, [rX, rY], [rdX, rdY], STONE_POINT.BLACK);
+          osc = countStones(board, [rX, rY], [rdX, rdY], POINT_BLACK);
         }
       }
 

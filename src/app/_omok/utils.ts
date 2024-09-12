@@ -1,5 +1,5 @@
 import { BOARD_SIZE } from './Board';
-import { StonePoint } from './Stone';
+import { StoneColor, StonePoint } from './Stone';
 import { Position, StoneBoard } from './types';
 
 /**
@@ -8,14 +8,17 @@ import { Position, StoneBoard } from './types';
  * @returns Stone의 Point로 변환된 Board
  */
 export function changeStoneToPoint(board: StoneBoard) {
-  return board.map((row) => row.map((stone) => stone?.getPoint ?? 0));
+  return board.map((row) => row.map((stone) => stone?.getPoint() ?? 0));
 }
 
 /** 올바른 착수 위치(보드 내)인지 확인하는 함수 */
 export function isValidStonePosition(position: Position) {
-  const [row, col] = position;
-
-  return row >= 0 && row <= BOARD_SIZE && col >= 0 && col <= BOARD_SIZE;
+  return (
+    position[0] >= 0 &&
+    position[0] <= BOARD_SIZE &&
+    position[1] >= 0 &&
+    position[1] <= BOARD_SIZE
+  );
 }
 
 /** 돌 갯수 세는 함수 */
@@ -58,4 +61,9 @@ export function view(board: StoneBoard) {
       )
       .join('\n'),
   );
+}
+
+/** 진행된 수로 현재 누구의 턴인지 반환 */
+export function getStoneColor(count: number): StoneColor {
+  return count % 2 === 1 ? 'black' : 'white';
 }
