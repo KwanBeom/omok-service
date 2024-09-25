@@ -8,6 +8,7 @@ import {
   getDistance,
   getStonePointByCount,
   Position,
+  sortPositions,
 } from './utils';
 
 type OpenTwo = [Position, Position];
@@ -19,15 +20,15 @@ export type RenjuGeumsu = {
 };
 
 class RenjuRule {
+  private position: Position = { x: 0, y: 0 };
+
+  private board: Board;
+
   private geumsu: RenjuGeumsu = {
     samsam: [],
     sasa: [],
     jangmok: [],
   };
-
-  private board: Board;
-
-  private position: Position = { x: 0, y: 0 };
 
   constructor() {
     this.board = new Board();
@@ -187,13 +188,9 @@ class RenjuRule {
       const afterNextOpenTwo = createPosition(tx + dx * 2, ty + dy * 2);
       const afterNextCurrentStone = createPosition(x + -dx * 2, y + -dy * 2);
 
-      const checkOpenThreeWithPosition = (position: Position) => {
-        const isOpenThree =
-          this.board.canDropStone(position) &&
-          this.checkOpenThree([currentPosition, openTwoSpot, position]);
-
-        return isOpenThree;
-      };
+      const checkOpenThreeWithPosition = (position: Position) =>
+        this.board.canDropStone(position) &&
+        this.checkOpenThree([currentPosition, openTwoSpot, position]);
 
       switch (distance) {
         // 붙은 2 (OO)
@@ -264,58 +261,98 @@ class RenjuRule {
     );
   }
 
-  /** openTwo들로 spot이 3*3 금수가 가능한지 확인 */
+  /** open two들로 spot 위치가 3*3이 되는지 확인 */
   private checkCanSamsam(spot: Position, openTwos: OpenTwo[]) {
     // 열린 2는 여러개 가능
-    const filteredOpenTwos = openTwos.filter((openTwo) => this.checkOpenThree([spot, ...openTwo]));
+    const filteredOpenTwos = openTwos.filter((openTwo) => {
+      const sortedPositions = sortPositions([spot, ...openTwo]);
+      const last = sortedPositions.length - 1;
 
-    // 교점에 open two 2개 이상이면 3*3 금수 가능
+      const { dx, dy } = Board.getDirection(sortedPositions[0], sortedPositions[last]);
+      const beforeFirstStone = createPosition(
+        sortedPositions[0].x + -dx,
+        sortedPositions[last].y + -dy,
+      );
+      const afterLastStone = createPosition(
+        sortedPositions[last].x + dx,
+        sortedPositions[last].y + dy,
+      );
+
+      // 열린 3이고 다음 수순에 열린 4를 만들 수 있는지 확인
+      return (
+        this.checkOpenThree([spot, ...openTwo]) &&
+        (this.checkOpenFour([spot, ...openTwo, beforeFirstStone]) ||
+          this.checkOpenFour([spot, ...openTwo, afterLastStone]))
+      );
+    });
+
+    // 교점에 3*3을 만들 수 있는 조건에 부합하는 돌들이 둘 이상인지 확인
     return filteredOpenTwos.length >= 2;
   }
 
-  /** 해당 포지션에 돌 3개가 놓아졌을 때 open three인지 확인 */
+  /** open three인지 확인 */
   private checkOpenThree(positions: [Position, Position, Position]) {
-    positions.sort((prev, curr) => prev.x - curr.x || prev.y - curr.y);
+    const isHaveWhite = positions.some(
+      (position) => this.board.get(position) === STONE.WHITE.POINT,
+    );
+
+    if (isHaveWhite) return false;
+
+    const sortedPositions = sortPositions(positions);
+    const fisrtPosition = sortedPositions[0];
+    const lastPosition = sortedPositions[sortedPositions.length - 1];
 
     // positions[0]에서 positions[2]으로 향하는 방향
-    const { dx, dy } = Board.getDirection(positions[0], positions[2]);
-    const distance = getDistance(positions[0], positions[2]);
+    const { dx, dy } = Board.getDirection(fisrtPosition, lastPosition);
+
     const bothSideEmpty =
-      this.board.canDropStone(createPosition(positions[0].x + -dx, positions[0].y + -dy)) &&
-      this.board.canDropStone(createPosition(positions[2].x + dx, positions[2].y + dy));
+      this.board.canDropStone(createPosition(fisrtPosition.x + -dx, fisrtPosition.y + -dy)) &&
+      this.board.canDropStone(createPosition(lastPosition.x + dx, lastPosition.y + dy));
 
     if (!bothSideEmpty) return false;
 
-    // 붙은 3 OOO
-    if (distance === 2) return Board.isSequential(positions);
+    // 띈 4 확인
+    const isHaveConnectedStone =
+      this.board.get(createPosition(fisrtPosition.x + -dx * 2, fisrtPosition.y + -dy * 2)) ===
+        STONE.BLACK.POINT ||
+      this.board.get(createPosition(lastPosition.x + dx * 2, lastPosition.y + dy * 2)) ===
+        STONE.BLACK.POINT;
 
-    // 띈 3 OVOO / OOVO
-    if (distance === 3) {
-      let { x, y } = positions[0];
-      let skip = false;
+    if (isHaveConnectedStone) return false;
 
-      for (let i = 0; i < positions.length - 1; i += 1) {
-        const currentPosition = createPosition(x, y);
+    const distance = getDistance(fisrtPosition, lastPosition);
 
-        if (!Board.isValidStonePosition(currentPosition)) return false;
-        if (this.board.get(currentPosition) === STONE.WHITE.POINT) return false;
+    // 붙은 3
+    if (distance === 2) return Board.isSequential(sortedPositions);
+    // 띈 3
+    if (distance === 3) return Board.isSequentialSkipOnce(sortedPositions);
 
-        const next = positions[i + 1];
+    return false;
+  }
 
-        if (!(x + dx === next.x && y + dy === next.y)) {
-          if (skip || !this.board.canDropStone(createPosition(x + dx, y + dy))) return false;
+  /** open four인지 확인 */
+  private checkOpenFour(positions: [Position, Position, Position, Position]) {
+    const isHaveWhite = positions.some(
+      (position) => this.board.get(position) === STONE.WHITE.POINT,
+    );
 
-          skip = true;
-          x += dx;
-          y += dy;
-        }
+    if (isHaveWhite) return false;
 
-        x += dx;
-        y += dy;
-      }
+    const sortedPositions = sortPositions(positions);
+    const fisrtPosition = sortedPositions[0];
+    const lastPosition = sortedPositions[sortedPositions.length - 1];
 
-      return true;
-    }
+    const { dx, dy } = Board.getDirection(fisrtPosition, lastPosition);
+    const distance = getDistance(fisrtPosition, lastPosition);
+    const bothSideEmpty =
+      this.board.canDropStone(createPosition(fisrtPosition.x + -dx, fisrtPosition.y + -dy)) &&
+      this.board.canDropStone(createPosition(lastPosition.x + dx, lastPosition.y + dy));
+
+    if (!bothSideEmpty) return false;
+    // 붙은 4
+    if (distance === 3) return Board.isSequential(sortedPositions);
+    // 띈 4
+    if (distance === 4) return Board.isSequentialSkipOnce(sortedPositions);
 
     return false;
   }

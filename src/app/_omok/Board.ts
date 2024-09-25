@@ -153,6 +153,30 @@ class Board {
     return true;
   }
 
+  /** 1칸 스킵 허용하고 돌들이 나란히 이어져 있는지 확인 */
+  static isSequentialSkipOnce(stones: Position[]) {
+    let { x, y } = stones[0];
+    let skip = false;
+    const { dx, dy } = Board.getDirection(stones[0], stones[stones.length - 1]);
+
+    for (let i = 0; i < stones.length - 1; i += 1) {
+      const next = stones[i + 1];
+
+      if (!(x + dx === next.x && y + dy === next.y)) {
+        if (skip) return false;
+
+        skip = true;
+        x += dx;
+        y += dy;
+      }
+
+      x += dx;
+      y += dy;
+    }
+
+    return true;
+  }
+
   /** stone1에서 stone2로 향하는 방향 구하기 */
   static getDirection(stone1: Position, stone2: Position) {
     const change = (n: number) => {

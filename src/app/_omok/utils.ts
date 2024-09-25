@@ -36,3 +36,8 @@ export function getDistance(position1: Position, position2: Position) {
 export function getStonePointByColor(color: StoneColor): StonePoint {
   return color === 'black' ? STONE.BLACK.POINT : STONE.WHITE.POINT;
 }
+
+/** 포지션 오름차순 정렬 */
+export function sortPositions(positions: Position[]) {
+  return positions.sort((prev, curr) => prev.x - curr.x || prev.y - curr.y);
+}
