@@ -1,5 +1,6 @@
+import { DIRECTIONS } from './constants';
 import { STONE, StonePoint } from './Stone';
-import { createDirection, Direction, Position } from './utils';
+import { createDirection, createPosition, Direction, Position, Positions } from './utils';
 
 export const EMPTY = 0 as const;
 
@@ -11,6 +12,8 @@ export const BOARD_SIZE = 14;
  */
 class Board {
   private board: (StonePoint | typeof EMPTY)[][];
+
+  private stoneCount = 0;
 
   constructor() {
     this.board = Array.from({ length: BOARD_SIZE + 1 }, () =>
@@ -25,6 +28,11 @@ class Board {
     if (!Board.isValidStonePosition(position)) return EMPTY;
 
     return this.board[x][y];
+  }
+
+  /** 놓여진 돌 갯수 반환 */
+  getStoneCount() {
+    return this.stoneCount;
   }
 
   /**
@@ -44,6 +52,7 @@ class Board {
       throw new Error('이미 돌이 놓여진 자리입니다');
     }
 
+    this.stoneCount += 1;
     this.board[row][col] = stone;
   }
 
@@ -136,56 +145,81 @@ class Board {
     return { count, skipPositions };
   }
 
-  /** 돌들이 나란히 이어져 있는지 확인 */
-  static isSequential(stones: Position[]) {
-    const positions = [...stones];
-    const { dx, dy } = Board.getDirection(positions[0], positions[positions.length - 1]);
+  /** position 기준, 연결되어 있는 count개 돌 위치 찾기 */
+  findConnectedStones<T extends number>(position: Position, count: T): Positions<T>[] {
+    const result: Positions<T>[] = [];
+    const cachedPositions = new Set();
 
-    for (let i = 0; i < positions.length - 1; i += 1) {
-      const current = positions[i];
-      const next = positions[i + 1];
+    const positionToCacheData = (positions: Position[]) => {
+      let data = '';
 
-      if (!(current.x + dx === next.x && current.y + dy === next.y)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  /** 1칸 스킵 허용하고 돌들이 나란히 이어져 있는지 확인 */
-  static isSequentialSkipOnce(stones: Position[]) {
-    let { x, y } = stones[0];
-    let skip = false;
-    const { dx, dy } = Board.getDirection(stones[0], stones[stones.length - 1]);
-
-    for (let i = 0; i < stones.length - 1; i += 1) {
-      const next = stones[i + 1];
-
-      if (!(x + dx === next.x && y + dy === next.y)) {
-        if (skip) return false;
-
-        skip = true;
-        x += dx;
-        y += dy;
+      for (let i = 0; i < positions.length; i += 1) {
+        data += `-${positions[i].x}.${positions[i].y}`;
       }
 
-      x += dx;
-      y += dy;
-    }
-
-    return true;
-  }
-
-  /** stone1에서 stone2로 향하는 방향 구하기 */
-  static getDirection(stone1: Position, stone2: Position) {
-    const change = (n: number) => {
-      if (n < 0) return 1;
-      if (n > 0) return -1;
-      return 0;
+      return data.slice(1);
     };
 
-    return createDirection(change(stone1.x - stone2.x), change(stone1.y - stone2.y));
+    const isPositionCached = (positions: Position[]) =>
+      cachedPositions.has(positionToCacheData(positions));
+
+    const cachePosition = (positions: Position[]) => {
+      // 정/역방향 위치 캐싱
+      cachedPositions.add(positionToCacheData(positions));
+      cachedPositions.add(positionToCacheData([...positions].reverse()));
+    };
+
+    // 흑돌 연결된 돌들 위치 찾기
+    const find = (p: Position, d: Direction): Positions<T> | undefined => {
+      let { x: cx, y: cy } = p;
+      const { dx, dy } = d;
+      // 연결된 2 찾는 경우 OVVO 위해 skip 2회까지 허용
+      const MAX_SKIP = count === 2 ? 2 : 1;
+      let skipCount = 0;
+      const positions: Position[] = [];
+      const opossiteFirstPosition = createPosition(cx + -dx, cy + -dy);
+
+      // 반대 방향의 첫번째 돌이 흑돌인 경우 카운팅
+      if (
+        Board.isValidStonePosition(opossiteFirstPosition) &&
+        this.get(opossiteFirstPosition) === STONE.BLACK.POINT
+      ) {
+        positions.push(opossiteFirstPosition);
+      }
+
+      while (Board.isValidStonePosition(createPosition(cx, cy))) {
+        const currentPosition = createPosition(cx, cy);
+        const target = this.get(currentPosition);
+
+        // 종료 조건
+        if (target === STONE.WHITE.POINT) break;
+        // 2회 스킵 허용
+        if (target === EMPTY && skipCount >= MAX_SKIP) break;
+        if (target === EMPTY) skipCount += 1;
+        if (target === STONE.BLACK.POINT) positions.push(currentPosition);
+
+        // 캐싱된 경우 중복 처리 방지
+        if (positions.length === count && !isPositionCached(positions)) {
+          // 캐싱되지 않은 경우 캐싱하고 위치 반환
+          cachePosition(positions);
+
+          return positions as Positions<T>;
+        }
+
+        cx += dx;
+        cy += dy;
+      }
+
+      return undefined;
+    };
+
+    for (let i = 0; i < DIRECTIONS.length; i += 1) {
+      const twoPosition = find(position, DIRECTIONS[i]);
+
+      if (twoPosition) result.push(twoPosition);
+    }
+
+    return result;
   }
 
   /** 올바른 착수 위치(보드 내)인지 확인하는 함수 */

@@ -4,6 +4,11 @@ export type Position = ReturnType<typeof createPosition>;
 
 export type Direction = ReturnType<typeof createDirection>;
 
+/** 포지션 튜플 생성 */
+export type Positions<N extends number, R extends Position[] = []> = R['length'] extends N
+  ? R
+  : Positions<N, [...R, Position]>;
+
 export function createPosition(x: number, y: number) {
   return { x, y };
 }
@@ -26,18 +31,23 @@ export function getStonePointByCount(count: number): StonePoint {
   return count % 2 === 1 ? STONE.BLACK.POINT : STONE.WHITE.POINT;
 }
 
-/** 두 돌 간 거리를 반환 */
-export function getDistance(position1: Position, position2: Position) {
-  const distance = Math.abs(position1.x - position2.x || position1.y - position2.y);
-
-  return distance;
-}
-
 export function getStonePointByColor(color: StoneColor): StonePoint {
   return color === 'black' ? STONE.BLACK.POINT : STONE.WHITE.POINT;
 }
 
-/** 포지션 오름차순 정렬 */
-export function sortPositions(positions: Position[]) {
-  return positions.sort((prev, curr) => prev.x - curr.x || prev.y - curr.y);
+/**
+ * 포지션 정렬
+ * @param positions 포지션 배열
+ * @param descending 기본 값은 false, true로 변경시 오름차순 정렬
+ * @returns 정렬된 포지션 배열
+ */
+export function sortPositions<T extends Position[]>(
+  positions: T,
+  descending: boolean = false,
+): [...T] {
+  return positions.sort((prev, curr) => {
+    if (descending) return curr.x - prev.x || curr.y - prev.y;
+
+    return prev.x - curr.x || prev.y - curr.y;
+  });
 }

@@ -310,7 +310,7 @@ describe('3*3 금수 테스트', () => {
     expect(omok.getGeumsu().samsam).toEqual([]);
   });
 
-  test('3*3 금수 모양이나 우측은 백 간접 방어, 좌측은 장목 금수인 경우 1', () => {
+  test('3*3 금수 모양이나 한쪽은 백 간접 방어, 한쪽은 장목 금수인 경우 1', () => {
     const omok = new Omok();
     const pos = [
       createPosition(7, 7),
@@ -331,7 +331,7 @@ describe('3*3 금수 테스트', () => {
     expect(omok.getGeumsu().samsam).toEqual([]);
   });
 
-  test('3*3 금수 모양이나 우측은 백 간접 방어, 좌측은 장목 금수인 경우 2', () => {
+  test('3*3 금수 모양이나 한쪽은 백 간접 방어, 한쪽은 장목 금수인 경우 2', () => {
     const omok = new Omok();
     const pos = [
       createPosition(7, 7),
@@ -340,9 +340,9 @@ describe('3*3 금수 테스트', () => {
       createPosition(14, 14),
       createPosition(7, 6),
       createPosition(13, 14),
-      createPosition(6, 6),
-      createPosition(14, 13),
       createPosition(6, 8),
+      createPosition(14, 13),
+      createPosition(6, 6),
     ];
 
     for (let i = 0; i < pos.length; i += 1) {
@@ -373,7 +373,7 @@ describe('3*3 금수 테스트', () => {
     expect(omok.getGeumsu().samsam).toEqual([]);
   });
 
-  test('간접막기 해금 테스트', () => {
+  test('3*3 간접막기 해금 테스트', () => {
     const omok = new Omok();
     const pos = [
       createPosition(7, 7),
@@ -393,7 +393,7 @@ describe('3*3 금수 테스트', () => {
     expect(omok.getGeumsu().samsam).toEqual([]);
   });
 
-  test('직접막기 해금 테스트', () => {
+  test('3*3 직접막기 해금 테스트', () => {
     const omok = new Omok();
     const pos = [
       createPosition(7, 7),
