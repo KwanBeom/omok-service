@@ -6,12 +6,12 @@ import { createDirection, createPosition, Position, Positions, sortPositions } f
 class OmokAnalyzer {
   /** 돌들이 나란히 이어져 있는지 확인 */
   static isSequential(stones: Position[]) {
-    const positions = [...stones];
-    const { dx, dy } = this.getDirection(positions[0], positions[positions.length - 1]);
+    // const stones = [...stones];
+    const { dx, dy } = this.getDirection(stones[0], stones[stones.length - 1]);
 
-    for (let i = 0; i < positions.length - 1; i += 1) {
-      const current = positions[i];
-      const next = positions[i + 1];
+    for (let i = 0; i < stones.length - 1; i += 1) {
+      const current = stones[i];
+      const next = stones[i + 1];
 
       if (!(current.x + dx === next.x && current.y + dy === next.y)) {
         return false;
@@ -64,8 +64,8 @@ class OmokAnalyzer {
   }
 
   /** open two인지 확인 */
-  static checkOpenTwo(board: Board, positions: Positions<2>) {
-    const [position1, position2] = positions;
+  static checkOpenTwo(board: Board, stones: Positions<2>) {
+    const [position1, position2] = stones;
     const { dx, dy } = this.getDirection(position1, position2);
     const distance = this.getDistance(position1, position2);
 
@@ -73,33 +73,33 @@ class OmokAnalyzer {
       board.canDropStone(createPosition(position1.x + -dx, position1.y + -dy)) &&
       board.canDropStone(createPosition(position2.x + dx, position2.y + dy));
 
-    if (bothSideEmpty) {
-      if (distance === 1) return true;
+    if (!bothSideEmpty) return false;
 
-      const innerFirstPosition = createPosition(position1.x + dx, position1.y + dy);
+    if (distance === 1) return true;
 
-      if (distance === 2) return board.canDropStone(innerFirstPosition);
+    const innerFirstPosition = createPosition(position1.x + dx, position1.y + dy);
 
-      const innerSecondPosition = createPosition(position1.x + dx * 2, position1.y + dy * 2);
+    if (distance === 2) return board.canDropStone(innerFirstPosition);
 
-      if (distance === 3) {
-        return board.canDropStone(innerFirstPosition) && board.canDropStone(innerSecondPosition);
-      }
+    const innerSecondPosition = createPosition(position1.x + dx * 2, position1.y + dy * 2);
+
+    if (distance === 3) {
+      return board.canDropStone(innerFirstPosition) && board.canDropStone(innerSecondPosition);
     }
 
     return false;
   }
 
   /** open three인지 확인 */
-  static checkOpenThree(board: Board, positions: Positions<3>) {
-    const isHaveWhite = positions.some((position) => board.get(position) === STONE.WHITE.POINT);
+  static checkOpenThree(board: Board, stones: Positions<3>) {
+    const isHaveWhite = stones.some((position) => board.get(position) === STONE.WHITE.POINT);
 
     if (isHaveWhite) return false;
 
-    const sortedPositions = sortPositions(positions);
+    const sortedPositions = sortPositions(stones);
     const fisrtPosition = sortedPositions[0];
     const lastPosition = sortedPositions[sortedPositions.length - 1];
-    // positions[0]에서 positions[2]으로 향하는 방향
+    // stones[0]에서 stones[2]으로 향하는 방향
     const { dx, dy } = this.getDirection(fisrtPosition, lastPosition);
     const bothSideEmpty =
       board.canDropStone(createPosition(fisrtPosition.x + -dx, fisrtPosition.y + -dy)) &&
@@ -127,12 +127,12 @@ class OmokAnalyzer {
   }
 
   /** open four인지 확인 */
-  static checkOpenFour(board: Board, positions: Positions<4>) {
-    const isHaveWhite = positions.some((position) => board.get(position) === STONE.WHITE.POINT);
+  static checkOpenFour(board: Board, stones: Positions<4>) {
+    const isHaveWhite = stones.some((position) => board.get(position) === STONE.WHITE.POINT);
 
     if (isHaveWhite) return false;
 
-    const sortedPositions = sortPositions(positions);
+    const sortedPositions = sortPositions(stones);
     const fisrtPosition = sortedPositions[0];
     const lastPosition = sortedPositions[sortedPositions.length - 1];
     const { dx, dy } = this.getDirection(fisrtPosition, lastPosition);
@@ -157,6 +157,56 @@ class OmokAnalyzer {
     if (distance === 3) return this.isSequential(sortedPositions);
     // 띈 4
     if (distance === 4) return this.isSequentialSkipOnce(sortedPositions);
+
+    return false;
+  }
+
+  /** 돌 하나를 추가해 오목을 만들 수 있는지 확인 */
+  static checkFour(board: Board, stones: Positions<4>) {
+    const isHaveWhite = stones.some((position) => board.get(position) === STONE.WHITE.POINT);
+
+    if (isHaveWhite) return false;
+
+    const sortedStones = sortPositions(stones);
+    const fisrtPosition = sortedStones[0];
+    const lastPosition = sortedStones[sortedStones.length - 1];
+    const distance = this.getDistance(fisrtPosition, lastPosition);
+    const { dx, dy } = this.getDirection(fisrtPosition, lastPosition);
+
+    // 붙은 4인 경우 유효한 4인지 확인
+    if (distance === 3 && OmokAnalyzer.isSequential(sortedStones)) {
+      // 한 방향이라도 열려있는지 확인해야 함
+      const nextFirst = createPosition(fisrtPosition.x + -dx, fisrtPosition.y + -dy);
+      const nextLast = createPosition(lastPosition.x + dx, lastPosition.y + dy);
+      const isNextFirstOpen = board.canDropStone(nextFirst);
+      const isNextLastOpen = board.canDropStone(nextLast);
+      const hasOpenSide = isNextFirstOpen || isNextLastOpen;
+
+      if (!hasOpenSide) return false;
+
+      // 한 방향만 열려 있는 경우 열려있는 방향에 돌이 있는지 확인, 돌을 놓을 수 있는 경우 조건 성립
+      if (isNextFirstOpen && !isNextLastOpen) {
+        return board.canDropStone(createPosition(nextFirst.x + -dx, nextFirst.y + -dy));
+      }
+
+      if (isNextLastOpen && !isNextFirstOpen) {
+        return board.canDropStone(createPosition(nextLast.x + dx, nextLast.y + dy));
+      }
+
+      return true;
+    }
+
+    // 띈 4인 경우 유효한 4인지 확인
+    if (distance === 4 && OmokAnalyzer.isSequentialSkipOnce(sortedStones)) {
+      // 양 옆이 막혀있어도 괜찮음, 띈 자리에 착수할 수 있는지만 확인
+      for (let i = 0; i < stones.length - 1; i += 1) {
+        const sum = createPosition(stones[i].x + dx, stones[i].y + dy);
+
+        if (!(sum.x === stones[i + 1].x && sum.y === stones[i + 1].y)) {
+          return board.canDropStone(sum);
+        }
+      }
+    }
 
     return false;
   }

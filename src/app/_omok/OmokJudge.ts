@@ -7,17 +7,17 @@ import { getStonePointByCount, Position } from './utils';
 class OmokJudge {
   private rule;
 
-  private board: Board;
+  private board = new Board();
 
   private geumsu: RenjuGeumsu = { samsam: [], sasa: [], jangmok: [] };
 
   constructor(rule: RenjuRule) {
     this.rule = rule;
-    this.board = new Board();
   }
 
   /** 룰 적용 */
   applyRule(board: Board, position: Position) {
+    this.board = board;
     this.geumsu = this.rule.apply(board, position);
   }
 
@@ -27,7 +27,8 @@ class OmokJudge {
   }
 
   /** 승리 여부 확인 */
-  checkWin(position: Position) {
+  checkWin(board: Board, position: Position) {
+    this.board = board;
     const count = this.board.getStoneCount();
 
     if (count < 9) return false;

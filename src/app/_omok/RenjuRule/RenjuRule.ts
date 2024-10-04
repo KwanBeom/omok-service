@@ -21,14 +21,12 @@ class RenjuRule {
     const count = board.getStoneCount();
     const isBlackTurn = getStonePointByCount(count) === STONE.BLACK.POINT;
 
-    if (isBlackTurn) {
-      this.rules.sasa.get();
-    }
-
     if (count >= 6) {
       geumsu.samsam = this.rules.samsam.haegeum(board);
+      geumsu.sasa = this.rules.sasa.haegeum(board);
 
       if (isBlackTurn) {
+        geumsu.sasa = this.rules.sasa.apply(board, position);
         geumsu.samsam = this.rules.samsam.apply(board, position);
         geumsu.jangmok = this.rules.jangmok.apply(board, position);
       }

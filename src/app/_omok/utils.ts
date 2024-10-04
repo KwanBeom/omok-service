@@ -51,3 +51,8 @@ export function sortPositions<T extends Position[]>(
     return prev.x - curr.x || prev.y - curr.y;
   });
 }
+
+/** 두 포지션이 동일한지 확인 */
+export function isSamePosition(position1: Position, position2: Position) {
+  return position1.x === position2.x && position1.y === position2.y;
+}

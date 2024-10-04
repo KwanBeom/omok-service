@@ -1,60 +1,42 @@
 import Board from '../Board';
 import OmokAnalyzer from '../OmokAnalyzer';
+import { STONE } from '../Stone';
 import { createPosition, Position, Positions, sortPositions } from '../utils';
-import GeumsuRule from './GeumsuRule';
 
 type TwoStonePositions = Positions<2>;
 
-class SamsamRule implements GeumsuRule {
-  private geumsu: { position: Position; openTwoPositions: TwoStonePositions[] }[] = [];
+/** 렌주룰 3*3 금수 */
+class SamsamRule {
+  private geumsu: { position: Position; openTwoStones: TwoStonePositions[] }[] = [];
 
-  private board: Board;
-
-  constructor() {
-    this.board = new Board();
-  }
-
-  get() {
-    return this.geumsu.map((data) => data.position);
-  }
-
-  /** position이 3*3 금수 위치인지 확인 */
-  check(board: Board, position: Position) {
-    this.board = board;
-    const connectedTwos = this.board.findConnectedStones(position, 2);
-
-    if (connectedTwos.length < 2) return false;
-
-    return this.checkCanSamsam(position, connectedTwos);
-  }
+  private board = new Board();
 
   apply(board: Board, position: Position) {
     this.board = board;
 
-    const connectedTwos = this.board.findConnectedStones(position, 2);
+    const connectedTwos = this.board.findConnectedStones(position, STONE.BLACK.POINT, 2, {
+      skip: 2,
+    });
     const canSamsamPositions: Position[] = [];
 
     for (let i = 0; i < connectedTwos.length; i += 1) {
       if (OmokAnalyzer.checkOpenTwo(this.board, connectedTwos[i])) {
-        canSamsamPositions.push(...this.findCanSamsamPositions(position, connectedTwos[i]));
+        canSamsamPositions.push(...this.findCanSamsamPositions(connectedTwos[i]));
       }
     }
 
     for (let j = 0; j < canSamsamPositions.length; j += 1) {
       const canSamsamPosition = canSamsamPositions[j];
       // 3*3 가능 자리 기준 연결된 2 탐색, 그 중 open two
-      const openTwoPositions = this.board
-        .findConnectedStones(canSamsamPosition, 2)
+      const openTwoStones = this.board
+        .findConnectedStones(canSamsamPosition, STONE.BLACK.POINT, 2, { skip: 2 })
         .filter((target) => OmokAnalyzer.checkOpenTwo(this.board, target));
 
-      // 3*3 가능 자리에 open two 2개 이상인 경우, 3*3 금수가 가능한지 확인하고 추가
-      if (
-        openTwoPositions.length >= 2 &&
-        this.checkCanSamsam(canSamsamPositions[j], openTwoPositions)
-      ) {
+      // 3*3 가능한 자리가 금수 위치인지 확인 후 추가
+      if (this.checkCanSamsam(canSamsamPositions[j], openTwoStones)) {
         this.geumsu.push({
           position: canSamsamPositions[j],
-          openTwoPositions,
+          openTwoStones,
         });
       }
     }
@@ -66,15 +48,29 @@ class SamsamRule implements GeumsuRule {
   haegeum(board: Board) {
     this.board = board;
 
-    this.geumsu = this.geumsu.filter(({ position, openTwoPositions }) =>
-      this.checkCanSamsam(position, openTwoPositions),
+    this.geumsu = this.geumsu.filter(({ position, openTwoStones }) =>
+      this.checkCanSamsam(position, openTwoStones),
     );
 
     return this.geumsu.map((data) => data.position);
   }
 
+  /** position이 3*3 금수 위치인지 확인 */
+  check(board: Board, position: Position) {
+    this.board = board;
+    const connectedTwos = this.board.findConnectedStones(position, STONE.BLACK.POINT, 2, {
+      skip: 2,
+    });
+
+    if (connectedTwos.length < 2) return false;
+
+    return this.checkCanSamsam(position, connectedTwos);
+  }
+
   /** open two들로 spot 위치가 3*3이 되는지 확인 */
   checkCanSamsam(spot: Position, openTwos: TwoStonePositions[]) {
+    if (openTwos.length < 2) return false;
+
     const filteredOpenTwos = openTwos.filter((openTwo) => {
       const sortedPositions = sortPositions([spot, ...openTwo]);
       const lastIndex = sortedPositions.length - 1;
@@ -101,13 +97,9 @@ class SamsamRule implements GeumsuRule {
   }
 
   /** 3*3 금수 가능한 위치 찾기 */
-  private findCanSamsamPositions(
-    position: Position,
-    twoStonePosition: TwoStonePositions,
-  ): Position[] {
-    const result = new Set();
-    const { x, y } = position;
-    const [pos1, pos2] = twoStonePosition;
+  private findCanSamsamPositions(twoStones: TwoStonePositions): Position[] {
+    const result = [];
+    const [pos1, pos2] = twoStones;
     const { x: x1, y: y1 } = pos1;
     const { x: x2, y: y2 } = pos2;
     const { dx, dy } = OmokAnalyzer.getDirection(pos1, pos2);
@@ -126,11 +118,11 @@ class SamsamRule implements GeumsuRule {
       // 붙은 2 (OO)
       case 1: {
         // 이은 3 위치가 열린 3인지 확인 후 3*3 가능 위치 추가
-        if (checkOpenThreeWithPosition(nextPos1)) result.add(nextPos1);
-        if (checkOpenThreeWithPosition(nextPos2)) result.add(nextPos2);
+        if (checkOpenThreeWithPosition(nextPos1)) result.push(nextPos1);
+        if (checkOpenThreeWithPosition(nextPos2)) result.push(nextPos2);
         // 띈 3 위치가 열린 3인지 확인 후 3*3 가능 위치 추가
-        if (checkOpenThreeWithPosition(afterNextPos1)) result.add(afterNextPos1);
-        if (checkOpenThreeWithPosition(afterNextPos2)) result.add(afterNextPos2);
+        if (checkOpenThreeWithPosition(afterNextPos1)) result.push(afterNextPos1);
+        if (checkOpenThreeWithPosition(afterNextPos2)) result.push(afterNextPos2);
 
         break;
       }
@@ -138,10 +130,10 @@ class SamsamRule implements GeumsuRule {
       // 1칸 띈 2 (OVO)
       case 2: {
         // 띈 2 사이 낀 위치 3*3 가능 위치 추가
-        result.add(createPosition(x + dx, y + dy));
-
-        if (checkOpenThreeWithPosition(nextPos1)) result.add(nextPos1);
-        if (checkOpenThreeWithPosition(nextPos2)) result.add(nextPos2);
+        result.push(createPosition(x1 + dx, y1 + dy));
+        console.log('거리2찾은가능위치', createPosition(x1 + dy, y1 + dy), nextPos1, nextPos2);
+        if (checkOpenThreeWithPosition(nextPos1)) result.push(nextPos1);
+        if (checkOpenThreeWithPosition(nextPos2)) result.push(nextPos2);
 
         break;
       }
@@ -149,8 +141,8 @@ class SamsamRule implements GeumsuRule {
       // 2칸 띈 2 (OVVO)
       case 3: {
         // 낀 2개 위치 모두 추가
-        result.add(createPosition(x + dx, y + dy));
-        result.add(createPosition(x + dx * 2, y + dy * 2));
+        result.push(createPosition(x1 + dx, y1 + dy));
+        result.push(createPosition(x1 + dx * 2, y1 + dy * 2));
 
         break;
       }
@@ -159,7 +151,7 @@ class SamsamRule implements GeumsuRule {
         break;
     }
 
-    return [...result] as Position[];
+    return result;
   }
 }
 

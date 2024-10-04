@@ -1,6 +1,14 @@
 import { DIRECTIONS } from './constants';
 import { STONE, StonePoint } from './Stone';
-import { createDirection, createPosition, Direction, Position, Positions } from './utils';
+import {
+  createDirection,
+  createPosition,
+  Direction,
+  isSamePosition,
+  Position,
+  Positions,
+  sortPositions,
+} from './utils';
 
 export const EMPTY = 0 as const;
 
@@ -42,18 +50,18 @@ class Board {
    * @param stone 놓아질 돌
    */
   dropStone(position: Position, stone: StonePoint) {
-    const { x: row, y: col } = position;
+    const { x, y } = position;
 
-    if (row < 0 || row > BOARD_SIZE || col < 0 || col > BOARD_SIZE) {
+    if (x < 0 || x > BOARD_SIZE || y < 0 || y > BOARD_SIZE) {
       throw new Error('올바르지 않은 착수 위치입니다');
     }
 
-    if (this.board[row][col] !== EMPTY) {
+    if (this.board[x][y] !== EMPTY) {
       throw new Error('이미 돌이 놓여진 자리입니다');
     }
 
     this.stoneCount += 1;
-    this.board[row][col] = stone;
+    this.board[x][y] = stone;
   }
 
   /** 돌을 놓을 수 있는 위치인지 확인하는 함수 */
@@ -145,10 +153,24 @@ class Board {
     return { count, skipPositions };
   }
 
-  /** position 기준, 연결되어 있는 count개 돌 위치 찾기 */
-  findConnectedStones<T extends number>(position: Position, count: T): Positions<T>[] {
+  /**
+   * position을 포함한 target의 연결된 count개 위치 찾기
+   * @param position 기준 위치
+   * @param target 찾을 돌
+   * @param count 찾을 돌 갯수
+   * @param options.skip 허용할 스킵 횟수
+   * @param options.positionIsEmpty position이 공백인지 여부, true인 경우 건너뛰고 탐색
+   */
+  findConnectedStones<T extends number>(
+    position: Position,
+    target: StonePoint,
+    count: T,
+    options?: { skip?: number; positionIsEmpty?: boolean },
+  ): Positions<T>[] {
     const result: Positions<T>[] = [];
     const cachedPositions = new Set();
+    const otherStone = target === STONE.BLACK.POINT ? STONE.WHITE.POINT : STONE.BLACK.POINT;
+    const maxSkip = options?.skip || 0;
 
     const positionToCacheData = (positions: Position[]) => {
       let data = '';
@@ -160,46 +182,57 @@ class Board {
       return data.slice(1);
     };
 
-    const isPositionCached = (positions: Position[]) =>
-      cachedPositions.has(positionToCacheData(positions));
+    const isPositionCached = (positions: Position[]) => {
+      const sortedPositions = sortPositions(positions);
 
-    const cachePosition = (positions: Position[]) => {
-      // 정/역방향 위치 캐싱
-      cachedPositions.add(positionToCacheData(positions));
-      cachedPositions.add(positionToCacheData([...positions].reverse()));
+      return cachedPositions.has(positionToCacheData(sortedPositions));
     };
 
-    // 흑돌 연결된 돌들 위치 찾기
-    const find = (p: Position, d: Direction): Positions<T> | undefined => {
-      let { x: cx, y: cy } = p;
-      const { dx, dy } = d;
-      // 연결된 2 찾는 경우 OVVO 위해 skip 2회까지 허용
-      const MAX_SKIP = count === 2 ? 2 : 1;
-      let skipCount = 0;
-      const positions: Position[] = [];
-      const opossiteFirstPosition = createPosition(cx + -dx, cy + -dy);
+    const cachePosition = (positions: Position[]) => {
+      const sortedPositions = sortPositions(positions);
 
-      // 반대 방향의 첫번째 돌이 흑돌인 경우 카운팅
-      if (
-        Board.isValidStonePosition(opossiteFirstPosition) &&
-        this.get(opossiteFirstPosition) === STONE.BLACK.POINT
-      ) {
-        positions.push(opossiteFirstPosition);
+      cachedPositions.add(positionToCacheData(sortedPositions));
+    };
+
+    // 연결된 돌 위치 찾기
+    const find = (p: Position, d: Direction): Positions<T> | undefined => {
+      const positions: Position[] = [];
+      const { dx, dy } = d;
+      let { x: cx, y: cy } = p;
+      let { x: rx, y: ry } = createPosition(cx + -dx, cy + -dy);
+      let skipCount = 0;
+
+      // 역방향 카운팅
+      while (Board.isValidStonePosition(createPosition(rx, ry))) {
+        const currentPosition = createPosition(rx, ry);
+        const currentCell = this.get(currentPosition);
+
+        if (currentCell === otherStone || currentCell === EMPTY) break;
+        if (currentCell === target) positions.push(currentPosition);
+
+        rx += -dx;
+        ry += -dy;
       }
 
       while (Board.isValidStonePosition(createPosition(cx, cy))) {
         const currentPosition = createPosition(cx, cy);
-        const target = this.get(currentPosition);
+        const currentCell = this.get(currentPosition);
 
-        // 종료 조건
-        if (target === STONE.WHITE.POINT) break;
-        // 2회 스킵 허용
-        if (target === EMPTY && skipCount >= MAX_SKIP) break;
-        if (target === EMPTY) skipCount += 1;
-        if (target === STONE.BLACK.POINT) positions.push(currentPosition);
+        if (currentCell === otherStone) break;
+        if (currentCell === target) positions.push(currentPosition);
+        if (currentCell === EMPTY) {
+          if (skipCount > maxSkip) break;
+          if (!options?.positionIsEmpty) skipCount += 1;
+          if (options?.positionIsEmpty && !isSamePosition(p, currentPosition)) {
+            skipCount += 1;
+          }
+        }
 
         // 캐싱된 경우 중복 처리 방지
         if (positions.length === count && !isPositionCached(positions)) {
+          const nextCell = this.get(createPosition(cx + dx, cy + dy));
+          if (nextCell === target) break;
+
           // 캐싱되지 않은 경우 캐싱하고 위치 반환
           cachePosition(positions);
 
@@ -214,9 +247,9 @@ class Board {
     };
 
     for (let i = 0; i < DIRECTIONS.length; i += 1) {
-      const twoPosition = find(position, DIRECTIONS[i]);
+      const foundPositions = find(position, DIRECTIONS[i]);
 
-      if (twoPosition) result.push(twoPosition);
+      if (foundPositions) result.push(foundPositions);
     }
 
     return result;

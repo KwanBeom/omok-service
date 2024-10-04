@@ -1,21 +1,12 @@
 import Board, { EMPTY } from '../Board';
 import { createDirection, createPosition, Direction, Position } from '../utils';
-import GeumsuRule from './GeumsuRule';
 import { STONE } from '../Stone';
 import { DIRECTIONS } from '../constants';
 
-class JangmokRule implements GeumsuRule {
-  private board: Board;
+class JangmokRule {
+  private board: Board = new Board();
 
   private geumsu: Position[] = [];
-
-  constructor() {
-    this.board = new Board();
-  }
-
-  check(board: Board, position: Position): boolean {
-    throw new Error('Method not implemented.');
-  }
 
   apply(board: Board, position: Position) {
     this.board = board;

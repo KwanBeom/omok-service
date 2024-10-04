@@ -1,10 +1,16 @@
 import Omok from '@/app/_omok/Omok';
 import { createPosition } from '@/app/_omok/utils';
+import playStones from '../../_utils/test.utils';
 
-describe('3*3 금수 테스트', () => {
+describe('33 금수 test', () => {
+  let omok: Omok;
+
+  beforeEach(() => {
+    omok = new Omok();
+  });
+
   test('한 방향만 1칸 띈 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(8, 8),
       createPosition(14, 14),
       createPosition(9, 9),
@@ -14,16 +20,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(7, 5),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(7, 7)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(7, 7)]);
   });
 
   test('기본 모양 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 0),
       createPosition(8, 7),
@@ -33,16 +36,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(6, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(6, 7)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(6, 7)]);
   });
 
   test('한 방향만 1칸 띈 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(9, 7),
       createPosition(14, 0),
       createPosition(10, 7),
@@ -52,16 +52,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(5, 4),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(8, 7)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(8, 7)]);
   });
 
   test('띈 3*3 모양', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 0),
       createPosition(8, 6),
@@ -71,16 +68,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(5, 12),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(5, 9)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(5, 9)]);
   });
 
   test('삿갓(ㅅ) 모양 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 0),
       createPosition(8, 6),
@@ -90,16 +84,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(8, 10),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(6, 8)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(6, 8)]);
   });
 
   test('한 방향이 직접 막힌 경우', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(7, 8),
       createPosition(7, 6),
@@ -109,16 +100,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(9, 5),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('한 방향이 간접 막힌 경우', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 14),
       createPosition(7, 8),
@@ -128,16 +116,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(9, 6),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('양방향 중간에 1칸 띈 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 14),
       createPosition(9, 7),
@@ -147,16 +132,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(6, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(6, 7)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(6, 7)]);
   });
 
   test('띈 3 위치가 간접 막힌 경우', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 14),
       createPosition(7, 8),
@@ -166,16 +148,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(8, 5),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('띈 3 위치가 직접 막힌 경우', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 14),
       createPosition(9, 7),
@@ -185,16 +164,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(6, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('낀 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 8),
       createPosition(14, 14),
       createPosition(7, 6),
@@ -204,16 +180,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(9, 7),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(7, 7)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(7, 7)]);
   });
 
   test('띄워져 있는 낀 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 5),
       createPosition(14, 14),
       createPosition(7, 8),
@@ -223,16 +196,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(8, 7),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(7, 7)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(7, 7)]);
   });
 
   test('하나만 띄워져 있는 낀 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 14),
       createPosition(7, 10),
@@ -242,16 +212,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(8, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(7, 8)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(7, 8)]);
   });
 
   test('열린 2가 3개 겹치는 3*3', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 1),
       createPosition(7, 9),
@@ -265,16 +232,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(4, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([createPosition(7, 8), createPosition(7, 8)]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(7, 8), createPosition(7, 8)]);
   });
 
   test('3*3 금수 모양이나, 3의 양방향이 간접 막혀있어 열린 4를 만들지 못하는 경우 1', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(7, 5),
       createPosition(7, 9),
@@ -284,16 +248,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(10, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('3*3 금수 모양이나, 3의 양방향이 간접 막혀있어 열린 4를 만들지 못하는 경우 2', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(8, 4),
       createPosition(8, 8),
@@ -303,16 +264,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(8, 6),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('3*3 금수 모양이나 한쪽은 백 간접 방어, 한쪽은 장목 금수인 경우 1', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(7, 10),
       createPosition(6, 8),
@@ -324,16 +282,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(7, 6),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('3*3 금수 모양이나 한쪽은 백 간접 방어, 한쪽은 장목 금수인 경우 2', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(10, 4),
       createPosition(3, 11),
@@ -345,16 +300,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(6, 6),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('4*3 위치가 3*3으로 판단되는지 테스트', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 0),
       createPosition(7, 9),
@@ -366,16 +318,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(9, 5),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('3*3 간접막기 해금 테스트', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 0),
       createPosition(7, 8),
@@ -386,16 +335,13 @@ describe('3*3 금수 테스트', () => {
       createPosition(7, 10),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 
   test('3*3 직접막기 해금 테스트', () => {
-    const omok = new Omok();
-    const pos = [
+    const positions = [
       createPosition(7, 7),
       createPosition(14, 0),
       createPosition(7, 10),
@@ -406,10 +352,8 @@ describe('3*3 금수 테스트', () => {
       createPosition(7, 8),
     ];
 
-    for (let i = 0; i < pos.length; i += 1) {
-      omok.play(pos[i]);
-    }
+    const omokAfterPlay = playStones(omok, positions);
 
-    expect(omok.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
   });
 });

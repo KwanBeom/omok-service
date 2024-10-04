@@ -30,7 +30,7 @@ class Omok {
 
   /** 승리 여부 확인 */
   checkWin() {
-    return this.judge.checkWin(this.prevPos);
+    return this.judge.checkWin(this.board, this.prevPos);
   }
 
   /** 금수 위치 반환 */
