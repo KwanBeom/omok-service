@@ -15,24 +15,42 @@ export type RenjuGeumsu = {
 class RenjuRule {
   private rules = { samsam: new SamsamRule(), sasa: new SasaRule(), jangmok: new JangmokRule() };
 
+  private geumsu: RenjuGeumsu = { samsam: [], sasa: [], jangmok: [] };
+
+  private board: Board = new Board();
+
   /** 룰 적용 */
   apply(board: Board, position: Position) {
-    const geumsu: RenjuGeumsu = { samsam: [], sasa: [], jangmok: [] };
+    this.board = board;
     const count = board.getStoneCount();
     const isBlackTurn = getStonePointByCount(count) === STONE.BLACK.POINT;
 
     if (count >= 6) {
-      geumsu.samsam = this.rules.samsam.haegeum(board);
-      geumsu.sasa = this.rules.sasa.haegeum(board);
+      this.geumsu.samsam = this.rules.samsam.haegeum(board);
+      this.geumsu.sasa = this.rules.sasa.haegeum(board);
 
       if (isBlackTurn) {
-        geumsu.sasa = this.rules.sasa.apply(board, position);
-        geumsu.samsam = this.rules.samsam.apply(board, position);
-        geumsu.jangmok = this.rules.jangmok.apply(board, position);
+        this.geumsu.sasa = this.rules.sasa.apply(board, position);
+        this.geumsu.samsam = this.rules.samsam.apply(board, position);
+        this.geumsu.jangmok = this.rules.jangmok.apply(board, position);
+
+        for (let i = 0; i < this.geumsu.sasa.length; i += 1) {
+          // if (this.checkFakeGeumsu(this.geumsu.sasa[i])) {
+          // }
+        }
+        // 거짓 금수 체크 및 적용
       }
     }
 
-    return geumsu;
+    return this.geumsu;
+  }
+
+  private checkFakeSamsamGeumsu(geumsuPosition: Position) {
+    return this.rules.sasa.check(this.board, geumsuPosition);
+  }
+
+  private checkFakeSasaGeumsu(geumsuPosition: Position) {
+    return this.rules.samsam.check(this.board, geumsuPosition);
   }
 }
 

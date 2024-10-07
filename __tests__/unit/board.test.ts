@@ -45,6 +45,23 @@ describe('Board Class Tests', () => {
     expect(result).toBe(5);
   });
 
+  test('countStones both direction test', () => {
+    const positions = [createPosition(7, 7), createPosition(7, 9), createPosition(7, 10)];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], STONE.BLACK.POINT);
+    }
+
+    const result = board.countStonesInBothDirections(
+      createPosition(7, 8),
+      createDirection(0, -1),
+      STONE.BLACK.POINT,
+      { assumeStonePlaced: true },
+    );
+
+    expect(result).toBe(3);
+  });
+
   describe('findConnectedStones test', () => {
     test('findConnectedStones, solid two stones', () => {
       const positions = [createPosition(7, 7), createPosition(8, 7)];

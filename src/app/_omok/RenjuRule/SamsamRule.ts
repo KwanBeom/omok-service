@@ -1,7 +1,8 @@
 import Board from '../Board';
+import { HALF_DIRECTIONS } from '../constants';
 import OmokAnalyzer from '../OmokAnalyzer';
 import { STONE } from '../Stone';
-import { createPosition, Position, Positions, sortPositions } from '../utils';
+import { createDirection, createPosition, Position, Positions, sortPositions } from '../utils';
 
 type TwoStonePositions = Positions<2>;
 
@@ -10,6 +11,18 @@ class SamsamRule {
   private geumsu: { position: Position; openTwoStones: TwoStonePositions[] }[] = [];
 
   private board = new Board();
+
+  /** position이 3*3 금수 위치인지 확인 */
+  check(board: Board, position: Position) {
+    this.board = board;
+    const connectedTwos = this.board.findConnectedStones(position, STONE.BLACK.POINT, 2, {
+      skip: 2,
+    });
+
+    if (connectedTwos.length < 2) return false;
+
+    return this.checkCanSamsam(position, connectedTwos);
+  }
 
   apply(board: Board, position: Position) {
     this.board = board;
@@ -44,27 +57,21 @@ class SamsamRule {
     return this.geumsu.map((data) => data.position);
   }
 
-  // TODO: 거짓 금수 구현 필요
   haegeum(board: Board) {
     this.board = board;
 
-    this.geumsu = this.geumsu.filter(({ position, openTwoStones }) =>
-      this.checkCanSamsam(position, openTwoStones),
-    );
+    this.geumsu = this.geumsu.filter(({ position, openTwoStones }) => {
+      if (!this.board.canDropStone(position)) return false;
 
-    return this.geumsu.map((data) => data.position);
-  }
+      const canFiveInARow = this.board.isNConnected(position, STONE.BLACK.POINT, 3, {
+        assumeStonePlaced: true,
+      });
+      if (canFiveInARow) return false;
 
-  /** position이 3*3 금수 위치인지 확인 */
-  check(board: Board, position: Position) {
-    this.board = board;
-    const connectedTwos = this.board.findConnectedStones(position, STONE.BLACK.POINT, 2, {
-      skip: 2,
+      return this.checkCanSamsam(position, openTwoStones);
     });
 
-    if (connectedTwos.length < 2) return false;
-
-    return this.checkCanSamsam(position, connectedTwos);
+    return this.geumsu.map((data) => data.position);
   }
 
   /** open two들로 spot 위치가 3*3이 되는지 확인 */
@@ -131,7 +138,7 @@ class SamsamRule {
       case 2: {
         // 띈 2 사이 낀 위치 3*3 가능 위치 추가
         result.push(createPosition(x1 + dx, y1 + dy));
-        console.log('거리2찾은가능위치', createPosition(x1 + dy, y1 + dy), nextPos1, nextPos2);
+
         if (checkOpenThreeWithPosition(nextPos1)) result.push(nextPos1);
         if (checkOpenThreeWithPosition(nextPos2)) result.push(nextPos2);
 

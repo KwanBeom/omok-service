@@ -44,11 +44,12 @@ class SasaGeumsu {
     this.board = board;
 
     this.geumsu = this.geumsu.filter(({ position, threeStones }) => {
-      if (this.checkCanSasa(position, threeStones)) {
-        return true;
-      }
+      const canFiveInARow = this.board.isNConnected(position, STONE.BLACK.POINT, 3, {
+        assumeStonePlaced: true,
+      });
+      if (canFiveInARow) return false;
 
-      return false;
+      return this.checkCanSasa(position, threeStones);
     });
 
     return this.geumsu.map((data) => data.position);
@@ -161,6 +162,7 @@ class SasaGeumsu {
     // 교점에 이어진 3이 2개 미만인 경우 금수 불가
     if (threeStones.length < 2) return false;
     if (!this.board.canDropStone(spot)) return false;
+
     /** spot이 간접 막혀있는지 확인 */
     const isIndirectlyBlocked = (stones: Positions<3>) => {
       const { x, y } = spot;

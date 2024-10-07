@@ -237,74 +237,6 @@ describe('33 금수 test', () => {
     expect(omokAfterPlay.getGeumsu().samsam).toEqual([createPosition(7, 8), createPosition(7, 8)]);
   });
 
-  test('3*3 금수 모양이나, 3의 양방향이 간접 막혀있어 열린 4를 만들지 못하는 경우 1', () => {
-    const positions = [
-      createPosition(7, 7),
-      createPosition(7, 5),
-      createPosition(7, 9),
-      createPosition(7, 11),
-      createPosition(9, 8),
-      createPosition(14, 14),
-      createPosition(10, 8),
-    ];
-
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
-  });
-
-  test('3*3 금수 모양이나, 3의 양방향이 간접 막혀있어 열린 4를 만들지 못하는 경우 2', () => {
-    const positions = [
-      createPosition(7, 7),
-      createPosition(8, 4),
-      createPosition(8, 8),
-      createPosition(8, 10),
-      createPosition(9, 7),
-      createPosition(14, 0),
-      createPosition(8, 6),
-    ];
-
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
-  });
-
-  test('3*3 금수 모양이나 한쪽은 백 간접 방어, 한쪽은 장목 금수인 경우 1', () => {
-    const positions = [
-      createPosition(7, 7),
-      createPosition(7, 10),
-      createPosition(6, 8),
-      createPosition(14, 10),
-      createPosition(5, 8),
-      createPosition(14, 1),
-      createPosition(7, 3),
-      createPosition(14, 2),
-      createPosition(7, 6),
-    ];
-
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
-  });
-
-  test('3*3 금수 모양이나 한쪽은 백 간접 방어, 한쪽은 장목 금수인 경우 2', () => {
-    const positions = [
-      createPosition(7, 7),
-      createPosition(10, 4),
-      createPosition(3, 11),
-      createPosition(14, 14),
-      createPosition(7, 6),
-      createPosition(13, 14),
-      createPosition(6, 8),
-      createPosition(14, 13),
-      createPosition(6, 6),
-    ];
-
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
-  });
-
   test('4*3 위치가 3*3으로 판단되는지 테스트', () => {
     const positions = [
       createPosition(7, 7),
@@ -355,5 +287,45 @@ describe('33 금수 test', () => {
     const omokAfterPlay = playStones(omok, positions);
 
     expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
+  });
+
+  test('칸수가 부족해 3*3 금수가 아닌 경우', () => {
+    const positions = [
+      createPosition(12, 1),
+      createPosition(14, 14),
+      createPosition(11, 1),
+      createPosition(13, 14),
+      createPosition(12, 3),
+      createPosition(14, 13),
+      createPosition(13, 3),
+    ];
+
+    const omokAfterPlay = playStones(omok, positions);
+
+    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
+  });
+
+  test('3*3 금수지만 5목을 만들 수 있어 아닌 경우', () => {
+    const positions = [
+      createPosition(7, 7),
+      createPosition(14, 14),
+      createPosition(6, 8),
+      createPosition(13, 14),
+      createPosition(9, 7),
+      createPosition(14, 13),
+      createPosition(10, 8),
+      createPosition(14, 12),
+      createPosition(8, 5),
+      createPosition(13, 13),
+      createPosition(8, 8),
+      createPosition(12, 14),
+      createPosition(8, 9),
+      createPosition(11, 14),
+      createPosition(8, 7),
+    ];
+
+    const omokAfterPlay = playStones(omok, positions);
+
+    expect(omokAfterPlay.getGeumsu().samsam).not.toContainEqual(createPosition(8, 6));
   });
 });

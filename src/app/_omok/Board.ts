@@ -78,7 +78,12 @@ class Board {
   }
 
   /** 한 방향으로 돌 갯수 세는 함수 */
-  countStones(position: Position, direction: Direction, target: StonePoint): number {
+  countStones(
+    position: Position,
+    direction: Direction,
+    target: StonePoint,
+    options?: { bothDirection?: boolean },
+  ): number {
     let count = 0;
     let { x, y } = position;
     const { dx, dy } = direction;
@@ -98,17 +103,27 @@ class Board {
     position: Position,
     direction: Direction,
     target: StonePoint,
+    options: { assumeStonePlaced?: boolean } = {},
   ): number {
     let total = 0;
     const { dx, dy } = direction;
 
     // 정방향 돌 세기
-    total += this.countStones(position, createDirection(dx, dy), target);
-    // 반대 방향 돌 세기
-    total += this.countStones(position, createDirection(-dx, -dy), target);
+    total += this.countStones(
+      options?.assumeStonePlaced ? createPosition(position.x + dx, position.y + dy) : position,
+      createDirection(dx, dy),
+      target,
+    );
 
-    // countStones 함수가 1부터 카운팅해서 토탈 - 1
-    return total - 1;
+    // 반대 방향 돌 세기
+    total += this.countStones(
+      options?.assumeStonePlaced ? createPosition(position.x + -dx, position.y + -dy) : position,
+      createDirection(-dx, -dy),
+      target,
+    );
+
+    // assumeStonePlace 옵션이 활성화 되지 않은 경우 시작 위치가 2번 카운팅 되기 때문에 -1
+    return options?.assumeStonePlaced ? total : total - 1;
   }
 
   /** 빈 셀은 건너뛰고 돌 갯수 세는 함수 */
@@ -130,14 +145,16 @@ class Board {
       if (this.board[x][y] === target) count += 1;
 
       if (this.board[x][y] === EMPTY) {
-        const isNextPosValid = Board.isValidStonePosition({ x: x + dx, y: y + dy });
-        const isNextWhiteStone = isNextPosValid && this.board[x + dx][y + dy] === STONE.WHITE.POINT;
+        const isNextPositionValid = Board.isValidStonePosition(createPosition(x + dx, y + dy));
+        const nextIsWhiteStone =
+          isNextPositionValid && this.board[x + dx][y + dy] === STONE.WHITE.POINT;
 
-        if (isNextWhiteStone) break;
+        if (nextIsWhiteStone) break;
 
         // 한번만 점프 가능한 경우
         if (canSkip - skipPositions.length === 1) {
-          if (isNextPosValid && this.board[x + dx][y + dy] === STONE.BLACK.POINT) {
+          // 점프 가능한 조건인 경우 점프하고 다음 반복문으로
+          if (isNextPositionValid && this.board[x + dx][y + dy] === STONE.BLACK.POINT) {
             skipPositions.push({ x, y });
           } else {
             break;
@@ -253,6 +270,23 @@ class Board {
     }
 
     return result;
+  }
+
+  // TODO: 디버깅용 삭제 필요
+  view() {
+    console.log(
+      this.board
+        .map((row) =>
+          row
+            .map((cell) => {
+              if (cell === STONE.BLACK.POINT) return '⚫️';
+              if (cell === STONE.WHITE.POINT) return '⚪️';
+              return '⭕️';
+            })
+            .join(''),
+        )
+        .join('\n'),
+    );
   }
 
   /** 올바른 착수 위치(보드 내)인지 확인하는 함수 */

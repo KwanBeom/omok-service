@@ -437,4 +437,32 @@ describe('44 금수 test', () => {
 
     expect(omokAfterPlay.getGeumsu().sasa).toEqual([]);
   });
+
+  test('4*4 금수지만 5목을 만들 수 있어 아닌 경우', () => {
+    const positions = [
+      createPosition(7, 7),
+      createPosition(7, 11),
+      createPosition(7, 8),
+      createPosition(11, 10),
+      createPosition(8, 7),
+      createPosition(14, 14),
+      createPosition(10, 9),
+      createPosition(13, 14),
+      createPosition(6, 5),
+      createPosition(14, 13),
+      createPosition(7, 5),
+      createPosition(12, 14),
+      createPosition(8, 6),
+      createPosition(14, 12),
+      createPosition(6, 6),
+      createPosition(13, 13),
+      createPosition(9, 6),
+      createPosition(10, 6),
+      createPosition(5, 6),
+    ];
+
+    const omokAfterPlay = playStones(omok, positions);
+
+    expect(omokAfterPlay.getGeumsu().sasa).not.toContainEqual(createPosition(7, 6));
+  });
 });
