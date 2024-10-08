@@ -1,7 +1,7 @@
 import Board from './Board';
-import { HALF_DIRECTIONS } from './constants';
-import RenjuRule, { RenjuGeumsu } from './RenjuRule/RenjuRule';
-import { getStonePointByCount, Position } from './utils';
+import { HALF_DIRECTIONS } from '../constants';
+import Position from '../entities/Position';
+import { RenjuGeumsu, RenjuRule } from '../rules/RenjuRule';
 
 /** 오목 심판 클래스 */
 class OmokJudge {
@@ -33,14 +33,12 @@ class OmokJudge {
 
     if (count < 9) return false;
 
-    const target = getStonePointByCount(count);
+    const target = board.get(position)!.color;
 
     for (let i = 0; i < HALF_DIRECTIONS.length; i += 1) {
       const stones = this.board.countStonesInBothDirections(position, HALF_DIRECTIONS[i], target);
 
-      if (stones >= 5) {
-        return true; // 5개 이상의 돌이 연결되면 승리
-      }
+      if (stones >= 5) return true; // 5개 이상의 돌이 연결되면 승리
     }
 
     return false;

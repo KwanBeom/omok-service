@@ -1,16 +1,9 @@
-import { DIRECTIONS } from './constants';
-import { STONE, StonePoint } from './Stone';
-import {
-  createDirection,
-  createPosition,
-  Direction,
-  isSamePosition,
-  Position,
-  Positions,
-  sortPositions,
-} from './utils';
+import { DIRECTIONS, HALF_DIRECTIONS } from '../constants';
+import Position, { Positions, sortPositions } from '../entities/Position';
+import Direction from '../entities/Direction';
+import Stone, { StoneColor } from '../entities/Stone';
 
-export const EMPTY = 0 as const;
+export const EMPTY = null;
 
 // 15*15, 배열 인덱싱 0 ~ 14
 export const BOARD_SIZE = 14;
@@ -19,7 +12,7 @@ export const BOARD_SIZE = 14;
  * 오목판 클래스
  */
 class Board {
-  private board: (StonePoint | typeof EMPTY)[][];
+  private board: (Stone | typeof EMPTY)[][];
 
   private stoneCount = 0;
 
@@ -49,7 +42,7 @@ class Board {
    * @param col 행
    * @param stone 놓아질 돌
    */
-  dropStone(position: Position, stone: StonePoint) {
+  dropStone(position: Position, color: StoneColor) {
     const { x, y } = position;
 
     if (x < 0 || x > BOARD_SIZE || y < 0 || y > BOARD_SIZE) {
@@ -61,35 +54,50 @@ class Board {
     }
 
     this.stoneCount += 1;
-    this.board[x][y] = stone;
+    this.board[x][y] = new Stone(color);
   }
 
   /** 돌을 놓을 수 있는 위치인지 확인하는 함수 */
   canDropStone(position: Position) {
     const { x, y } = position;
-    const isInsideBoard =
-      position.x >= 0 && position.x <= BOARD_SIZE && position.y >= 0 && position.y <= BOARD_SIZE;
 
-    if (!isInsideBoard) {
-      return false;
-    }
+    if (!Board.isValidStonePosition(position)) return false;
 
     return this.board[x][y] === EMPTY;
   }
 
-  /** 한 방향으로 돌 갯수 세는 함수 */
+  /** 한 방향으로 돌 갯수 카운팅하는 함수 */
   countStones(
     position: Position,
     direction: Direction,
-    target: StonePoint,
-    options?: { bothDirection?: boolean },
+    target: StoneColor,
+    options?: { skip?: number; assumeStonePlaced?: boolean },
   ): number {
     let count = 0;
-    let { x, y } = position;
-    const { dx, dy } = direction;
+    let skip = 0;
+    const canSkip = options?.skip || 0;
 
-    while (Board.isValidStonePosition({ x, y }) && this.board[x][y] === target) {
+    const { dx, dy } = direction;
+    let { x, y } = position;
+
+    if (options?.assumeStonePlaced) {
       count += 1;
+      x += dx;
+      y += dy;
+    }
+
+    const isValidCondition = (p: Position) => {
+      const targetCell = this.get(p);
+
+      return (
+        Board.isValidStonePosition(p) && targetCell instanceof Stone && targetCell.color === target
+      );
+    };
+
+    while (isValidCondition(new Position(x, y)) || skip < canSkip) {
+      const targetCell = this.board[x][y];
+      if (targetCell instanceof Stone && targetCell.color === target) count += 1;
+      if (targetCell === EMPTY) skip += 1;
 
       x += dx;
       y += dy;
@@ -102,23 +110,24 @@ class Board {
   countStonesInBothDirections(
     position: Position,
     direction: Direction,
-    target: StonePoint,
+    target: StoneColor,
     options: { assumeStonePlaced?: boolean } = {},
   ): number {
     let total = 0;
     const { dx, dy } = direction;
+    const reverse = direction.reverse();
 
     // 정방향 돌 세기
     total += this.countStones(
-      options?.assumeStonePlaced ? createPosition(position.x + dx, position.y + dy) : position,
-      createDirection(dx, dy),
+      options?.assumeStonePlaced ? position.move(dx, dy) : position,
+      new Direction(dx, dy),
       target,
     );
 
     // 반대 방향 돌 세기
     total += this.countStones(
-      options?.assumeStonePlaced ? createPosition(position.x + -dx, position.y + -dy) : position,
-      createDirection(-dx, -dy),
+      options?.assumeStonePlaced ? position.move(reverse.dx, reverse.dy) : position,
+      direction.reverse(),
       target,
     );
 
@@ -126,48 +135,24 @@ class Board {
     return options?.assumeStonePlaced ? total : total - 1;
   }
 
-  /** 빈 셀은 건너뛰고 돌 갯수 세는 함수 */
-  countStonesSkippingEmpty(
+  /** position 포함해 n개의 돌이 이어지는지 확인 */
+  isNConnected(
     position: Position,
-    direction: Direction,
-    target: StonePoint,
-    canSkip: number,
-  ): { count: number; skipPositions: Position[] } {
-    let { x, y } = position;
-    const { dx, dy } = direction;
-    const skipPositions: Position[] = [];
-    let count = 0;
+    target: StoneColor,
+    n: number,
+    options?: { assumeStonePlaced?: boolean },
+  ) {
+    for (let i = 0; i < HALF_DIRECTIONS.length; i += 1) {
+      const direction = HALF_DIRECTIONS[i];
 
-    while (
-      Board.isValidStonePosition({ x, y }) &&
-      (this.board[x][y] === target || canSkip - skipPositions.length > 0)
-    ) {
-      if (this.board[x][y] === target) count += 1;
+      const count = this.countStonesInBothDirections(position, direction, target, {
+        assumeStonePlaced: options?.assumeStonePlaced,
+      });
 
-      if (this.board[x][y] === EMPTY) {
-        const isNextPositionValid = Board.isValidStonePosition(createPosition(x + dx, y + dy));
-        const nextIsWhiteStone =
-          isNextPositionValid && this.board[x + dx][y + dy] === STONE.WHITE.POINT;
-
-        if (nextIsWhiteStone) break;
-
-        // 한번만 점프 가능한 경우
-        if (canSkip - skipPositions.length === 1) {
-          // 점프 가능한 조건인 경우 점프하고 다음 반복문으로
-          if (isNextPositionValid && this.board[x + dx][y + dy] === STONE.BLACK.POINT) {
-            skipPositions.push({ x, y });
-          } else {
-            break;
-          }
-        }
-      }
-
-      x += dx;
-      y += dy;
+      if (count === n) return true;
     }
 
-    // 건너뛴 위치도 함께 반환
-    return { count, skipPositions };
+    return false;
   }
 
   /**
@@ -180,13 +165,13 @@ class Board {
    */
   findConnectedStones<T extends number>(
     position: Position,
-    target: StonePoint,
+    target: StoneColor,
     count: T,
     options?: { skip?: number; positionIsEmpty?: boolean },
   ): Positions<T>[] {
     const result: Positions<T>[] = [];
     const cachedPositions = new Set();
-    const otherStone = target === STONE.BLACK.POINT ? STONE.WHITE.POINT : STONE.BLACK.POINT;
+    const otherStone: StoneColor = target === 'black' ? 'white' : 'black';
     const maxSkip = options?.skip || 0;
 
     const positionToCacheData = (positions: Position[]) => {
@@ -215,40 +200,50 @@ class Board {
     const find = (p: Position, d: Direction): Positions<T> | undefined => {
       const positions: Position[] = [];
       const { dx, dy } = d;
+      const reverse = d.reverse();
       let { x: cx, y: cy } = p;
-      let { x: rx, y: ry } = createPosition(cx + -dx, cy + -dy);
+      let { x: rx, y: ry } = p.move(reverse.dx, reverse.dy);
       let skipCount = 0;
 
       // 역방향 카운팅
-      while (Board.isValidStonePosition(createPosition(rx, ry))) {
-        const currentPosition = createPosition(rx, ry);
-        const currentCell = this.get(currentPosition);
+      while (Board.isValidStonePosition(new Position(rx, ry))) {
+        const currentPosition = new Position(rx, ry);
+        const currentCell = this.board[rx][ry];
 
-        if (currentCell === otherStone || currentCell === EMPTY) break;
-        if (currentCell === target) positions.push(currentPosition);
+        if (
+          (currentCell instanceof Stone && currentCell.color === otherStone) ||
+          currentCell === EMPTY
+        ) {
+          break;
+        }
+        if (currentCell instanceof Stone && currentCell.color === target) {
+          positions.push(currentPosition);
+        }
 
         rx += -dx;
         ry += -dy;
       }
 
-      while (Board.isValidStonePosition(createPosition(cx, cy))) {
-        const currentPosition = createPosition(cx, cy);
+      while (Board.isValidStonePosition(new Position(cx, cy))) {
+        const currentPosition = new Position(cx, cy);
         const currentCell = this.get(currentPosition);
 
-        if (currentCell === otherStone) break;
-        if (currentCell === target) positions.push(currentPosition);
+        if (currentCell instanceof Stone && currentCell.color === otherStone) break;
+        if (currentCell instanceof Stone && currentCell.color === target)
+          positions.push(currentPosition);
         if (currentCell === EMPTY) {
           if (skipCount > maxSkip) break;
           if (!options?.positionIsEmpty) skipCount += 1;
-          if (options?.positionIsEmpty && !isSamePosition(p, currentPosition)) {
+          if (options?.positionIsEmpty && !p.isSame(currentPosition)) {
             skipCount += 1;
           }
         }
 
         // 캐싱된 경우 중복 처리 방지
         if (positions.length === count && !isPositionCached(positions)) {
-          const nextCell = this.get(createPosition(cx + dx, cy + dy));
-          if (nextCell === target) break;
+          const nextCell = this.get(currentPosition.move(dx, dy));
+
+          if (nextCell instanceof Stone && nextCell.color === target) break;
 
           // 캐싱되지 않은 경우 캐싱하고 위치 반환
           cachePosition(positions);
@@ -276,24 +271,36 @@ class Board {
   view() {
     console.log(
       this.board
-        .map((row) =>
-          row
-            .map((cell) => {
-              if (cell === STONE.BLACK.POINT) return '⚫️';
-              if (cell === STONE.WHITE.POINT) return '⚪️';
-              return '⭕️';
-            })
-            .join(''),
-        )
+        .map((row, i) => {
+          const result =
+            `${i}`.padStart(2, ' ') +
+            row
+              .map((cell) => {
+                if (cell instanceof Stone && cell.color === 'black') return '⚫️';
+                if (cell instanceof Stone && cell.color === 'black') return '⚪️';
+                return '🔵';
+              })
+              .join('');
+
+          if (i === 0) {
+            const numbers = Array.from({ length: BOARD_SIZE + 1 }, (_, id) =>
+              `${id}`.padEnd(2, ' '),
+            );
+
+            return `  ${numbers.join('')}\n${result}`;
+          }
+
+          return result;
+        })
         .join('\n'),
     );
   }
 
   /** 올바른 착수 위치(보드 내)인지 확인하는 함수 */
   static isValidStonePosition(position: Position) {
-    return (
-      position.x >= 0 && position.x <= BOARD_SIZE && position.y >= 0 && position.y <= BOARD_SIZE
-    );
+    const { x, y } = position;
+
+    return x >= 0 && x <= BOARD_SIZE && y >= 0 && y <= BOARD_SIZE;
   }
 }
 

@@ -1,17 +1,17 @@
-import Board from '@/app/_omok/Board';
-import OmokAnalyzer from '@/app/_omok/OmokAnalyzer';
-import { STONE } from '@/app/_omok/Stone';
-import { createDirection, createPosition, Positions } from '@/app/_omok/utils';
+import Direction from '@/app/_omok/entities/Direction';
+import OmokAnalyzer from '@/app/_omok/core/OmokAnalyzer';
+import Position, { Positions } from '@/app/_omok/entities/Position';
+import Board from '@/app/_omok/core/Board';
 
 describe('OmokAnalyzer tests', () => {
   let board: Board;
-  const positions: Positions<2> = [createPosition(7, 7), createPosition(7, 8)];
+  const positions: Positions<2> = [new Position(7, 7), new Position(7, 8)];
 
   beforeEach(() => {
     board = new Board();
 
     for (let i = 0; i < positions.length; i += 1) {
-      board.dropStone(positions[i], STONE.BLACK.POINT);
+      board.dropStone(positions[i], 'black');
     }
   });
 
@@ -30,7 +30,7 @@ describe('OmokAnalyzer tests', () => {
   test('getDirection test', () => {
     const direction = OmokAnalyzer.getDirection(positions[0], positions[1]);
 
-    expect(direction).toEqual(createDirection(0, 1));
+    expect(direction).toEqual(new Direction(0, 1));
   });
 
   test('checkOpenTwo test', () => {
@@ -38,7 +38,7 @@ describe('OmokAnalyzer tests', () => {
 
     expect(isOpenTwo).toBe(true);
 
-    board.dropStone(createPosition(7, 9), STONE.WHITE.POINT);
+    board.dropStone(new Position(7, 9), 'white');
 
     const isOpenTwoAfterBlock = OmokAnalyzer.checkOpenTwo(board, positions);
 
@@ -46,16 +46,16 @@ describe('OmokAnalyzer tests', () => {
   });
 
   test('checkOpenThree test', () => {
-    const newPosition = createPosition(7, 9);
+    const newPosition = new Position(7, 9);
     const three: Positions<3> = [...positions, newPosition];
 
-    board.dropStone(newPosition, STONE.BLACK.POINT);
+    board.dropStone(newPosition, 'black');
 
     const isOpenThree = OmokAnalyzer.checkOpenThree(board, three);
 
     expect(isOpenThree).toBe(true);
 
-    board.dropStone(createPosition(7, 10), STONE.WHITE.POINT);
+    board.dropStone(new Position(7, 10), 'white');
 
     const isOpenThreeAfterBlock = OmokAnalyzer.checkOpenThree(board, three);
 
@@ -63,10 +63,10 @@ describe('OmokAnalyzer tests', () => {
   });
 
   test('checkOpenFour test', () => {
-    const newPositions: Positions<2> = [createPosition(7, 10), createPosition(7, 11)];
+    const newPositions: Positions<2> = [new Position(7, 10), new Position(7, 11)];
 
     for (let i = 0; i < newPositions.length; i += 1) {
-      board.dropStone(newPositions[i], STONE.BLACK.POINT);
+      board.dropStone(newPositions[i], 'black');
     }
 
     const isOpenFour = OmokAnalyzer.checkOpenFour(board, [...positions, ...newPositions]);
@@ -75,10 +75,10 @@ describe('OmokAnalyzer tests', () => {
   });
 
   test('checkFour test', () => {
-    const newPositions: Positions<2> = [createPosition(7, 10), createPosition(7, 11)];
+    const newPositions: Positions<2> = [new Position(7, 10), new Position(7, 11)];
 
     for (let i = 0; i < newPositions.length; i += 1) {
-      board.dropStone(newPositions[i], STONE.BLACK.POINT);
+      board.dropStone(newPositions[i], 'black');
     }
 
     const four: Positions<4> = [...positions, ...newPositions];
@@ -86,10 +86,10 @@ describe('OmokAnalyzer tests', () => {
 
     expect(isFour).toBe(true);
 
-    const blockPositions = [createPosition(7, 6), createPosition(7, 12)];
+    const blockPositions = [new Position(7, 6), new Position(7, 12)];
 
     for (let i = 0; i < blockPositions.length; i += 1) {
-      board.dropStone(blockPositions[i], STONE.WHITE.POINT);
+      board.dropStone(blockPositions[i], 'white');
     }
 
     const isFourAfterBlock = OmokAnalyzer.checkOpenFour(board, four);

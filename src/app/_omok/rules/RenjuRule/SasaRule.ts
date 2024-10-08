@@ -1,23 +1,17 @@
-import Board from '../Board';
-import OmokAnalyzer from '../OmokAnalyzer';
-import { STONE } from '../Stone';
-import { createPosition, Position, Positions, sortPositions } from '../utils';
+import Board from "../../core/Board";
+import OmokAnalyzer from "../../core/OmokAnalyzer";
+import Position, { Positions, sortPositions } from "../../entities/Position";
+
 
 type ThreeStonePositions = Positions<3>;
+
+export type SasaGeumsuDatas = { position: Position; threeStones: ThreeStonePositions[] }[];
 
 /** 렌주룰 4*4 금수 */
 class SasaGeumsu {
   private board = new Board();
 
-  private geumsu: { position: Position; threeStones: ThreeStonePositions[] }[] = [];
-
-  check(board: Board, position: Position) {
-    this.board = board;
-
-    const connectedThrees = this.board.findConnectedStones(position, STONE.BLACK.POINT, 3);
-
-    return this.checkCanSasa(position, connectedThrees);
-  }
+  private geumsuDatas: SasaGeumsuDatas = [];
 
   apply(board: Board, position: Position) {
     this.board = board;
@@ -25,54 +19,53 @@ class SasaGeumsu {
     const canSasaPositions = this.findCanSasaPositions(position);
 
     for (let i = 0; i < canSasaPositions.length; i += 1) {
-      const threeStones = this.board.findConnectedStones(
-        canSasaPositions[i],
-        STONE.BLACK.POINT,
-        3,
-        { positionIsEmpty: true },
-      );
+      const threeStones = this.board.findConnectedStones(canSasaPositions[i], 'black', 3, {
+        positionIsEmpty: true,
+      });
 
       if (this.checkCanSasa(canSasaPositions[i], threeStones)) {
-        this.geumsu.push({ position: canSasaPositions[i], threeStones });
+        this.geumsuDatas.push({ position: canSasaPositions[i], threeStones });
       }
     }
 
-    return this.geumsu.map((data) => data.position);
+    return this.geumsuDatas.map((data) => data.position);
   }
 
   haegeum(board: Board) {
     this.board = board;
 
-    this.geumsu = this.geumsu.filter(({ position, threeStones }) => {
-      const canFiveInARow = this.board.isNConnected(position, STONE.BLACK.POINT, 3, {
+    this.geumsuDatas = this.geumsuDatas.filter(({ position, threeStones }) => {
+      const canFiveInARow = this.board.isNConnected(position, 'black', 4, {
         assumeStonePlaced: true,
       });
+
       if (canFiveInARow) return false;
 
       return this.checkCanSasa(position, threeStones);
     });
 
-    return this.geumsu.map((data) => data.position);
+    return this.geumsuDatas.map((data) => data.position);
   }
 
   /** 4*4 금수 가능한 위치 찾기 */
   private findCanSasaPositions(position: Position): Position[] {
-    const connectedThrees = this.board.findConnectedStones(position, STONE.BLACK.POINT, 3, {
+    const connectedThrees = this.board.findConnectedStones(position, 'black', 3, {
       skip: 2,
     });
     const result: Position[] = [];
 
     for (let i = 0; i < connectedThrees.length; i += 1) {
       const sortedPositions = sortPositions(connectedThrees[i]);
-      const firstStone = sortedPositions[0];
-      const lastStone = sortedPositions[2];
-      const distance = OmokAnalyzer.getDistance(firstStone, lastStone);
-      const { dx, dy } = OmokAnalyzer.getDirection(firstStone, lastStone);
+      const first = sortedPositions[0];
+      const last = sortedPositions[2];
+      const distance = OmokAnalyzer.getDistance(first, last);
+      const direction = OmokAnalyzer.getDirection(first, last);
+      const reverse = direction.reverse();
 
-      const nextFirst = createPosition(firstStone.x + -dx, firstStone.y + -dy);
-      const nextLast = createPosition(lastStone.x + dx, lastStone.y + dy);
-      const afterNextFirst = createPosition(firstStone.x + -dx * 2, firstStone.y + -dy * 2);
-      const afterNextLast = createPosition(lastStone.x + dx * 2, lastStone.y + dy * 2);
+      const nextFirst = first.move(reverse.dx, reverse.dy);
+      const afterNextFirst = first.move(reverse.dx, reverse.dy, 2);
+      const nextLast = last.move(direction.dx, direction.dy);
+      const afterNextLast = last.move(direction.dx, direction.dy, 2);
 
       const canDropNextTwoFirstStone =
         this.board.canDropStone(nextFirst) && this.board.canDropStone(afterNextFirst);
@@ -103,16 +96,16 @@ class SasaGeumsu {
 
           if (bothSideEmpty) {
             // 양 사이가 비어있는 경우 띈 위치 추가
-            let { x, y } = firstStone;
+            let { x, y } = first;
 
             for (let j = 0; j < sortedPositions.length; j += 1) {
               if (!(sortedPositions[j].x === x && sortedPositions[j].y === y)) {
-                result.push(createPosition(x, y));
+                result.push(new Position(x, y));
                 break;
               }
 
-              x += dx;
-              y += dy;
+              x += direction.dx;
+              y += direction.dy;
             }
           }
 
@@ -125,21 +118,21 @@ class SasaGeumsu {
 
         // 2칸 띈 3인 경우, (OVVOO)
         case 4: {
-          let { x, y } = firstStone;
+          let { x, y } = first;
           const emptyPositions = [];
 
           // 띈 위치 추가
           for (let j = 0; j < sortedPositions.length; j += 1) {
             if (!(sortedPositions[j].x === x && sortedPositions[j].y === y)) {
-              const currentPosition = createPosition(x, y);
+              const currentPosition = new Position(x, y);
               if (!this.board.canDropStone(currentPosition)) break;
 
               emptyPositions.push(currentPosition);
               j -= 1;
             }
 
-            x += dx;
-            y += dy;
+            x += direction.dx;
+            y += direction.dy;
           }
 
           if (emptyPositions.length === 2) {
@@ -165,11 +158,10 @@ class SasaGeumsu {
 
     /** spot이 간접 막혀있는지 확인 */
     const isIndirectlyBlocked = (stones: Positions<3>) => {
-      const { x, y } = spot;
       const { dx, dy } = OmokAnalyzer.getDirection(stones[0], spot);
-      const indirectPosition = createPosition(x + dx, y + dy);
+      const indirectPosition = spot.move(dx, dy);
 
-      return this.board.get(indirectPosition) === STONE.WHITE.POINT;
+      return this.board.get(indirectPosition)?.color === 'white';
     };
 
     const filteredThreeStones = threeStones.filter((threeStone) => {

@@ -1,10 +1,11 @@
 import Board from './Board';
+import Position from '../entities/Position';
 import OmokJudge from './OmokJudge';
-import RenjuRule from './RenjuRule/RenjuRule';
-import { getStonePointByCount, Position } from './utils';
+import { StoneColor } from '../entities/Stone';
+import { RenjuRule } from '../rules/RenjuRule';
 
 class Omok {
-  private prevPos: Position = { x: 0, y: 0 };
+  private prevPos: Position = new Position(0, 0);
 
   private board = new Board();
 
@@ -16,11 +17,10 @@ class Omok {
    * position 위치에 돌을 착수하고 다음 턴으로 넘기는 메서드
    */
   play(position: Position) {
-    const { x: row, y: col } = position;
     this.count += 1;
-    this.board.dropStone({ x: row, y: col }, getStonePointByCount(this.count));
-    this.judge.applyRule(this.board, { x: row, y: col });
-    this.prevPos = { x: row, y: col };
+    this.board.dropStone(position, Omok.getStoneColorByCount(this.count));
+    this.judge.applyRule(this.board, position);
+    this.prevPos = position;
   }
 
   /** 몇 수 진행되었는지 확인 */
@@ -36,6 +36,10 @@ class Omok {
   /** 금수 위치 반환 */
   getGeumsu() {
     return this.judge.getGeumsuPositions();
+  }
+
+  static getStoneColorByCount(count: number): StoneColor {
+    return count % 2 === 1 ? 'black' : 'white';
   }
 }
 

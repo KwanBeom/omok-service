@@ -1,6 +1,6 @@
-import Board from '@/app/_omok/Board';
-import { STONE, StonePoint } from '@/app/_omok/Stone';
-import { createDirection, createPosition } from '@/app/_omok/utils';
+import Board from '@/app/_omok/core/Board';
+import Direction from '@/app/_omok/entities/Direction';
+import Position from '@/app/_omok/entities/Position';
 
 describe('Board Class Tests', () => {
   let board: Board;
@@ -10,9 +10,9 @@ describe('Board Class Tests', () => {
   });
 
   test('canDropStone test', () => {
-    const position = createPosition(7, 7);
+    const position = new Position(7, 7);
 
-    board.dropStone(position, STONE.BLACK.POINT);
+    board.dropStone(position, 'black');
 
     const result = board.canDropStone(position);
 
@@ -21,92 +21,180 @@ describe('Board Class Tests', () => {
 
   test('countStones test', () => {
     const positions = [
-      createPosition(7, 7),
-      createPosition(0, 0),
-      createPosition(7, 8),
-      createPosition(0, 1),
-      createPosition(7, 9),
-      createPosition(0, 2),
-      createPosition(7, 10),
-      createPosition(0, 3),
-      createPosition(7, 11),
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 10),
+      new Position(7, 11),
     ];
 
     for (let i = 1; i < positions.length + 1; i += 1) {
-      board.dropStone(positions[i - 1], (i % 2) as StonePoint);
+      board.dropStone(positions[i - 1], 'black');
     }
 
-    const result = board.countStones(
-      createPosition(7, 11),
-      createDirection(0, -1),
-      STONE.BLACK.POINT,
-    );
+    const result = board.countStones(new Position(7, 11), new Direction(0, -1), 'black');
 
     expect(result).toBe(5);
   });
 
-  test('countStones both direction test', () => {
-    const positions = [createPosition(7, 7), createPosition(7, 9), createPosition(7, 10)];
+  test('countStones assumeStonePlaced option test', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 10),
+    ];
 
     for (let i = 0; i < positions.length; i += 1) {
-      board.dropStone(positions[i], STONE.BLACK.POINT);
+      board.dropStone(positions[i], 'black');
+    }
+
+    const result = board.countStones(new Position(7, 6), new Direction(0, 1), 'black', {
+      assumeStonePlaced: true,
+    });
+
+    expect(result).toBe(5);
+  });
+
+  test('countStones skip option test', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(7, 10),
+      new Position(7, 11),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
+    }
+
+    const result = board.countStones(positions[0], new Direction(0, 1), 'black', {
+      skip: 1,
+    });
+
+    expect(result).toBe(4);
+  });
+
+  test('countStonesInBothDirection test', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 6),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 10),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
+    }
+
+    const result = board.countStonesInBothDirections(positions[0], new Direction(0, -1), 'black');
+
+    expect(result).toBe(5);
+  });
+
+  test('countStonesInBothDirection assumeStonePlaced option test', () => {
+    const positions = [
+      new Position(7, 5),
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 10),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
     }
 
     const result = board.countStonesInBothDirections(
-      createPosition(7, 8),
-      createDirection(0, -1),
-      STONE.BLACK.POINT,
+      new Position(7, 6),
+      new Direction(0, -1),
+      'black',
       { assumeStonePlaced: true },
     );
 
-    expect(result).toBe(3);
+    expect(result).toBe(6);
+  });
+
+  test('isNConnected test 1', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 10),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
+    }
+
+    const result = board.isNConnected(positions[0], 'black', 4);
+
+    expect(result).toBe(true);
+  });
+
+  test('isNConnected test 2', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 11),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
+    }
+
+    expect(board.isNConnected(new Position(7, 10), 'black', 4, { assumeStonePlaced: true })).toBe(
+      true,
+    );
   });
 
   describe('findConnectedStones test', () => {
     test('findConnectedStones, solid two stones', () => {
-      const positions = [createPosition(7, 7), createPosition(8, 7)];
+      const positions = [new Position(7, 7), new Position(8, 7)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(positions[1], STONE.BLACK.POINT, 2);
+      const result = board.findConnectedStones(positions[1], 'black', 2);
 
       expect(result[0]).toEqual(expect.arrayContaining(positions));
     });
 
     test('findConnectedStones, skip once two stones', () => {
-      const positions = [createPosition(7, 7), createPosition(9, 7)];
+      const positions = [new Position(7, 7), new Position(9, 7)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(positions[0], STONE.BLACK.POINT, 2);
+      const result = board.findConnectedStones(positions[0], 'black', 2);
 
       expect(result[0]).toEqual(expect.arrayContaining(positions));
     });
 
     test('findConnectedStones, three stones', () => {
-      const positions = [createPosition(7, 7), createPosition(8, 7), createPosition(9, 7)];
+      const positions = [new Position(7, 7), new Position(8, 7), new Position(9, 7)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(positions[0], STONE.BLACK.POINT, 3);
+      const result = board.findConnectedStones(positions[0], 'black', 3);
 
       expect(result[0]).toEqual(expect.arrayContaining(positions));
     });
 
     test('findConnectedStones, positionIsEmpty option', () => {
-      const positions = [createPosition(5, 9), createPosition(4, 10), createPosition(3, 11)];
+      const positions = [new Position(5, 9), new Position(4, 10), new Position(3, 11)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(createPosition(7, 7), STONE.BLACK.POINT, 3, {
+      const result = board.findConnectedStones(new Position(7, 7), 'black', 3, {
         positionIsEmpty: true,
       });
 
@@ -114,25 +202,25 @@ describe('Board Class Tests', () => {
     });
 
     test('findConnectedStones, skip once three stones', () => {
-      const positions = [createPosition(7, 7), createPosition(5, 9), createPosition(4, 10)];
+      const positions = [new Position(7, 7), new Position(5, 9), new Position(4, 10)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(positions[0], STONE.BLACK.POINT, 3, { skip: 1 });
+      const result = board.findConnectedStones(positions[0], 'black', 3, { skip: 1 });
 
       expect(result[0]).toEqual(expect.arrayContaining(positions));
     });
 
     test('findConnectedStones, skip twice three stones (OVOVO)', () => {
-      const positions = [createPosition(7, 7), createPosition(7, 9), createPosition(7, 11)];
+      const positions = [new Position(7, 7), new Position(7, 9), new Position(7, 11)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(positions[0], STONE.BLACK.POINT, 3, {
+      const result = board.findConnectedStones(positions[0], 'black', 3, {
         skip: 2,
       });
 
@@ -140,13 +228,13 @@ describe('Board Class Tests', () => {
     });
 
     test('findConnectedStones, skip twice three stones (OOVVO)', () => {
-      const positions = [createPosition(7, 7), createPosition(7, 10), createPosition(7, 6)];
+      const positions = [new Position(7, 7), new Position(7, 10), new Position(7, 6)];
 
       for (let i = 0; i < positions.length; i += 1) {
-        board.dropStone(positions[i], STONE.BLACK.POINT);
+        board.dropStone(positions[i], 'black');
       }
 
-      const result = board.findConnectedStones(positions[0], STONE.BLACK.POINT, 3, {
+      const result = board.findConnectedStones(positions[0], 'black', 3, {
         skip: 2,
       });
 

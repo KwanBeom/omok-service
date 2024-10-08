@@ -1,6 +1,6 @@
-import Omok from '@/app/_omok/Omok';
-import { createPosition } from '@/app/_omok/utils';
-import playStones from '../_utils/test.utils';
+import Omok from '@/app/_omok/core/Omok';
+import Position from '@/app/_omok/entities/Position';
+import playStones from '../utils/utils';
 
 describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
   let omok: Omok;
@@ -11,15 +11,15 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
 
   test('흑돌 가로 5 승리', () => {
     const positions = [
-      createPosition(7, 7),
-      createPosition(0, 0),
-      createPosition(7, 8),
-      createPosition(0, 1),
-      createPosition(7, 9),
-      createPosition(0, 2),
-      createPosition(7, 10),
-      createPosition(0, 3),
-      createPosition(7, 11),
+      new Position(7, 7),
+      new Position(0, 0),
+      new Position(7, 8),
+      new Position(0, 1),
+      new Position(7, 9),
+      new Position(0, 2),
+      new Position(7, 10),
+      new Position(0, 3),
+      new Position(7, 11),
     ];
 
     const omokAfterPlay = playStones(omok, positions);
@@ -29,15 +29,15 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
 
   test('흑돌 대각 5 승리', () => {
     const positions = [
-      createPosition(7, 7),
-      createPosition(0, 0),
-      createPosition(8, 8),
-      createPosition(0, 1),
-      createPosition(9, 9),
-      createPosition(0, 2),
-      createPosition(10, 10),
-      createPosition(0, 3),
-      createPosition(11, 11),
+      new Position(7, 7),
+      new Position(0, 0),
+      new Position(8, 8),
+      new Position(0, 1),
+      new Position(9, 9),
+      new Position(0, 2),
+      new Position(10, 10),
+      new Position(0, 3),
+      new Position(11, 11),
     ];
 
     const omokAfterPlay = playStones(omok, positions);
@@ -47,16 +47,16 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
 
   test('백돌 가로 5 승리', () => {
     const positions = [
-      createPosition(0, 0),
-      createPosition(7, 7),
-      createPosition(0, 1),
-      createPosition(7, 8),
-      createPosition(0, 2),
-      createPosition(7, 9),
-      createPosition(0, 3),
-      createPosition(7, 10),
-      createPosition(0, 4),
-      createPosition(7, 11),
+      new Position(0, 0),
+      new Position(7, 7),
+      new Position(0, 1),
+      new Position(7, 8),
+      new Position(0, 2),
+      new Position(7, 9),
+      new Position(0, 3),
+      new Position(7, 10),
+      new Position(0, 4),
+      new Position(7, 11),
     ];
 
     const omokAfterPlay = playStones(omok, positions);
@@ -66,16 +66,16 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
 
   test('백돌 대각 5 승리', () => {
     const positions = [
-      createPosition(0, 0),
-      createPosition(7, 7),
-      createPosition(0, 1),
-      createPosition(8, 8),
-      createPosition(0, 2),
-      createPosition(9, 9),
-      createPosition(0, 3),
-      createPosition(10, 10),
-      createPosition(0, 5),
-      createPosition(11, 11),
+      new Position(0, 0),
+      new Position(7, 7),
+      new Position(0, 1),
+      new Position(8, 8),
+      new Position(0, 2),
+      new Position(9, 9),
+      new Position(0, 3),
+      new Position(10, 10),
+      new Position(0, 5),
+      new Position(11, 11),
     ];
 
     const omokAfterPlay = playStones(omok, positions);
