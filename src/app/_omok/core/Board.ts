@@ -3,22 +3,22 @@ import Position, { Positions, sortPositions } from '../entities/Position';
 import Direction from '../entities/Direction';
 import Stone, { StoneColor } from '../entities/Stone';
 
-export const EMPTY = null;
-
-// 15*15, 배열 인덱싱 0 ~ 14
-export const BOARD_SIZE = 14;
-
 /**
  * 오목판 클래스
  */
 class Board {
-  private board: (Stone | typeof EMPTY)[][];
+  // 15*15, 배열 인덱싱 0 ~ 14
+  static readonly SIZE = 14;
+
+  static readonly EMPTY = null;
+
+  private board: (Stone | typeof Board.EMPTY)[][];
 
   private stoneCount = 0;
 
   constructor() {
-    this.board = Array.from({ length: BOARD_SIZE + 1 }, () =>
-      new Array(BOARD_SIZE + 1).fill(EMPTY),
+    this.board = Array.from({ length: Board.SIZE + 1 }, () =>
+      new Array(Board.SIZE + 1).fill(Board.EMPTY),
     );
   }
 
@@ -26,7 +26,7 @@ class Board {
   get(position: Position) {
     const { x, y } = position;
 
-    if (!Board.isValidStonePosition(position)) return EMPTY;
+    if (!Board.isValidStonePosition(position)) return Board.EMPTY;
 
     return this.board[x][y];
   }
@@ -45,11 +45,11 @@ class Board {
   dropStone(position: Position, color: StoneColor) {
     const { x, y } = position;
 
-    if (x < 0 || x > BOARD_SIZE || y < 0 || y > BOARD_SIZE) {
+    if (x < 0 || x > Board.SIZE || y < 0 || y > Board.SIZE) {
       throw new Error('올바르지 않은 착수 위치입니다');
     }
 
-    if (this.board[x][y] !== EMPTY) {
+    if (this.board[x][y] !== Board.EMPTY) {
       throw new Error('이미 돌이 놓여진 자리입니다');
     }
 
@@ -63,7 +63,7 @@ class Board {
 
     if (!Board.isValidStonePosition(position)) return false;
 
-    return this.board[x][y] === EMPTY;
+    return this.board[x][y] === Board.EMPTY;
   }
 
   /** 한 방향으로 돌 갯수 카운팅하는 함수 */
@@ -89,15 +89,13 @@ class Board {
     const isValidCondition = (p: Position) => {
       const targetCell = this.get(p);
 
-      return (
-        Board.isValidStonePosition(p) && targetCell instanceof Stone && targetCell.color === target
-      );
+      return Board.isValidStonePosition(p) && targetCell?.color === target;
     };
 
     while (isValidCondition(new Position(x, y)) || skip < canSkip) {
       const targetCell = this.board[x][y];
-      if (targetCell instanceof Stone && targetCell.color === target) count += 1;
-      if (targetCell === EMPTY) skip += 1;
+      if (targetCell?.color === target) count += 1;
+      if (targetCell === Board.EMPTY) skip += 1;
 
       x += dx;
       y += dy;
@@ -111,18 +109,16 @@ class Board {
     position: Position,
     direction: Direction,
     target: StoneColor,
-    options: { assumeStonePlaced?: boolean } = {},
+    options?: { assumeStonePlaced?: boolean },
   ): number {
     let total = 0;
     const { dx, dy } = direction;
     const reverse = direction.reverse();
 
     // 정방향 돌 세기
-    total += this.countStones(
-      options?.assumeStonePlaced ? position.move(dx, dy) : position,
-      new Direction(dx, dy),
-      target,
-    );
+    total += this.countStones(position, new Direction(dx, dy), target, {
+      assumeStonePlaced: options?.assumeStonePlaced,
+    });
 
     // 반대 방향 돌 세기
     total += this.countStones(
@@ -210,15 +206,8 @@ class Board {
         const currentPosition = new Position(rx, ry);
         const currentCell = this.board[rx][ry];
 
-        if (
-          (currentCell instanceof Stone && currentCell.color === otherStone) ||
-          currentCell === EMPTY
-        ) {
-          break;
-        }
-        if (currentCell instanceof Stone && currentCell.color === target) {
-          positions.push(currentPosition);
-        }
+        if (currentCell?.color === otherStone || currentCell === Board.EMPTY) break;
+        if (currentCell?.color === target) positions.push(currentPosition);
 
         rx += -dx;
         ry += -dy;
@@ -228,10 +217,9 @@ class Board {
         const currentPosition = new Position(cx, cy);
         const currentCell = this.get(currentPosition);
 
-        if (currentCell instanceof Stone && currentCell.color === otherStone) break;
-        if (currentCell instanceof Stone && currentCell.color === target)
-          positions.push(currentPosition);
-        if (currentCell === EMPTY) {
+        if (currentCell?.color === otherStone) break;
+        if (currentCell?.color === target) positions.push(currentPosition);
+        if (currentCell === Board.EMPTY) {
           if (skipCount > maxSkip) break;
           if (!options?.positionIsEmpty) skipCount += 1;
           if (options?.positionIsEmpty && !p.isSame(currentPosition)) {
@@ -243,7 +231,7 @@ class Board {
         if (positions.length === count && !isPositionCached(positions)) {
           const nextCell = this.get(currentPosition.move(dx, dy));
 
-          if (nextCell instanceof Stone && nextCell.color === target) break;
+          if (nextCell?.color === target) break;
 
           // 캐싱되지 않은 경우 캐싱하고 위치 반환
           cachePosition(positions);
@@ -276,14 +264,14 @@ class Board {
             `${i}`.padStart(2, ' ') +
             row
               .map((cell) => {
-                if (cell instanceof Stone && cell.color === 'black') return '⚫️';
-                if (cell instanceof Stone && cell.color === 'black') return '⚪️';
+                if (cell?.color === 'black') return '⚫️';
+                if (cell?.color === 'white') return '⚪️';
                 return '🔵';
               })
               .join('');
 
           if (i === 0) {
-            const numbers = Array.from({ length: BOARD_SIZE + 1 }, (_, id) =>
+            const numbers = Array.from({ length: Board.SIZE + 1 }, (_, id) =>
               `${id}`.padEnd(2, ' '),
             );
 
@@ -300,7 +288,7 @@ class Board {
   static isValidStonePosition(position: Position) {
     const { x, y } = position;
 
-    return x >= 0 && x <= BOARD_SIZE && y >= 0 && y <= BOARD_SIZE;
+    return x >= 0 && x <= Board.SIZE && y >= 0 && y <= Board.SIZE;
   }
 }
 

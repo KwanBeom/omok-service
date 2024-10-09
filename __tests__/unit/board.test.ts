@@ -145,7 +145,7 @@ describe('Board Class Tests', () => {
       board.dropStone(positions[i], 'black');
     }
 
-    expect(board.isNConnected(new Position(7, 10), 'black', 4, { assumeStonePlaced: true })).toBe(
+    expect(board.isNConnected(new Position(7, 10), 'black', 5, { assumeStonePlaced: true })).toBe(
       true,
     );
   });

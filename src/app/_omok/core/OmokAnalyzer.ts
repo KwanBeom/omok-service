@@ -135,7 +135,7 @@ class OmokAnalyzer {
     // 띈 위치에 흑돌이 있는지 확인, 있는 경우 띈 4 조건 성립이기 때문에 false
     const isHaveConnectedStone =
       board.get(first.move(reverse.dx, reverse.dy, 2))?.color === 'black' ||
-      board.get(last.move(direction.dx, direction.dy))?.color === 'black';
+      board.get(last.move(direction.dx, direction.dy, 2))?.color === 'black';
 
     if (isHaveConnectedStone) return false;
 

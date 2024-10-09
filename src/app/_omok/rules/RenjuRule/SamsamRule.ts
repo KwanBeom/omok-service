@@ -1,6 +1,6 @@
-import Board from "../../core/Board";
-import OmokAnalyzer from "../../core/OmokAnalyzer";
-import Position, { Positions, sortPositions } from "../../entities/Position";
+import Board from '../../core/Board';
+import OmokAnalyzer from '../../core/OmokAnalyzer';
+import Position, { Positions, sortPositions } from '../../entities/Position';
 
 type TwoStonePositions = Positions<2>;
 
@@ -51,7 +51,7 @@ class SamsamRule {
     this.geumsu = this.geumsu.filter(({ position, openTwoStones }) => {
       if (!this.board.canDropStone(position)) return false;
 
-      const canFiveInARow = this.board.isNConnected(position, 'black', 4, {
+      const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
       });
 
@@ -69,12 +69,10 @@ class SamsamRule {
 
     const filteredOpenTwos = openTwos.filter((openTwo) => {
       const sortedPositions = sortPositions([spot, ...openTwo]);
-      const lastIndex = sortedPositions.length - 1;
       const first = sortedPositions[0];
-      const last = sortedPositions[lastIndex];
+      const last = sortedPositions[sortedPositions.length - 1];
       const direction = OmokAnalyzer.getDirection(first, last);
       const reverse = direction.reverse();
-
       const beforeFirst = first.move(reverse.dx, reverse.dy);
       const afterLast = last.move(direction.dx, direction.dy);
 

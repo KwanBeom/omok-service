@@ -1,5 +1,5 @@
 import { DIRECTIONS } from '../../constants';
-import Board, { EMPTY } from '../../core/Board';
+import Board from '../../core/Board';
 import Direction from '../../entities/Direction';
 import Position from '../../entities/Position';
 
@@ -74,9 +74,9 @@ class JangmokRule {
 
       if (target?.color === 'white') break;
       // 점프 이후 또 빈 셀을 만난 경우
-      if (target === EMPTY && jumpPos) break;
+      if (this.board.canDropStone(currentPosition) && jumpPos) break;
       // 1회 점프 허용(count가 5일시 장목이 될 자리)
-      if (target === EMPTY && !jumpPos) jumpPos = new Position(nx, ny);
+      if (this.board.canDropStone(currentPosition) && !jumpPos) jumpPos = new Position(nx, ny);
       if (target?.color === 'black') stoneCount += 1;
 
       nx += dx;

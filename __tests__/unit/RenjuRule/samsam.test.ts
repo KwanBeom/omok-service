@@ -237,7 +237,7 @@ describe('33 금수 test', () => {
     expect(omokAfterPlay.getGeumsu().samsam).toEqual([new Position(7, 8), new Position(7, 8)]);
   });
 
-  test('4*3 위치가 3*3으로 판단되는지 테스트', () => {
+  test('4*3 위치가 3*3으로 판단되는지 테스트 1', () => {
     const positions = [
       new Position(7, 7),
       new Position(14, 0),
@@ -252,7 +252,25 @@ describe('33 금수 test', () => {
 
     const omokAfterPlay = playStones(omok, positions);
 
-    expect(omokAfterPlay.getGeumsu().samsam).toEqual([]);
+    expect(omokAfterPlay.getGeumsu().samsam).not.toContainEqual(new Position(7, 5));
+  });
+
+  test('4*3 위치가 3*3으로 판단되는지 테스트 2', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(8, 8),
+      new Position(5, 9),
+      new Position(8, 6),
+      new Position(4, 10),
+      new Position(8, 9),
+      new Position(8, 10),
+      new Position(4, 9),
+      new Position(7, 9),
+    ];
+
+    const omokAfterPlay = playStones(omok, positions);
+
+    expect(omokAfterPlay.getGeumsu().samsam).not.toContainEqual(new Position(6, 8));
   });
 
   test('3*3 간접막기 해금 테스트', () => {

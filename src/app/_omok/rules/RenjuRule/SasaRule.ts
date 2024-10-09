@@ -35,7 +35,7 @@ class SasaGeumsu {
     this.board = board;
 
     this.geumsuDatas = this.geumsuDatas.filter(({ position, threeStones }) => {
-      const canFiveInARow = this.board.isNConnected(position, 'black', 4, {
+      const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
       });
 
