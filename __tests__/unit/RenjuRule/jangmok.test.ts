@@ -128,4 +128,44 @@ describe('장목 금수 test', () => {
 
     expect(omokAfterPlay.getGeumsu().jangmok).not.toContainEqual(new Position(7, 8));
   });
+
+  test('장목 금수 아닌 경우', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(6, 7),
+      new Position(6, 6),
+      new Position(8, 8),
+      new Position(7, 8),
+      new Position(7, 6),
+      new Position(8, 5),
+      new Position(8, 7),
+      new Position(7, 4),
+      new Position(6, 5),
+      new Position(5, 4),
+      new Position(9, 7),
+      new Position(9, 6),
+      new Position(10, 7),
+      new Position(9, 4),
+      new Position(11, 7),
+      new Position(12, 7),
+      new Position(11, 5),
+      new Position(10, 6),
+      new Position(11, 6),
+      new Position(11, 4),
+      new Position(12, 5),
+      new Position(9, 8),
+      new Position(9, 3),
+      new Position(9, 5),
+      new Position(8, 2),
+      new Position(7, 1),
+      new Position(6, 3),
+      new Position(12, 6),
+      new Position(6, 4),
+      new Position(9, 2),
+    ];
+
+    playStones(omok, positions);
+
+    expect(omok.getGeumsu().jangmok).not.toContainEqual(new Position(9, 1));
+  });
 });

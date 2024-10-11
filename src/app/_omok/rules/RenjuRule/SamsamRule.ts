@@ -1,8 +1,9 @@
 import Board from '../../core/Board';
 import OmokAnalyzer from '../../core/OmokAnalyzer';
-import Position, { Positions, sortPositions } from '../../entities/Position';
+import Position, { PositionTuple } from '../../entities/Position';
+import Positions from '../../entities/Positions';
 
-type TwoStonePositions = Positions<2>;
+type TwoStonePositions = PositionTuple<2>;
 
 export type SamsamGeumsuDatas = { position: Position; openTwoStones: TwoStonePositions[] }[];
 
@@ -29,9 +30,7 @@ class SamsamRule {
     for (let j = 0; j < canSamsamPositions.length; j += 1) {
       const canSamsamPosition = canSamsamPositions[j];
       // 3*3 가능 자리 기준 연결된 2 탐색, 그 중 open two
-      const openTwoStones = this.board
-        .findConnectedStones(canSamsamPosition, 'black', 2, { skip: 2 })
-        .filter((target) => OmokAnalyzer.checkOpenTwo(this.board, target));
+      const openTwoStones = this.findOpenTwos(canSamsamPosition);
 
       // 3*3 가능한 자리가 금수 위치인지 확인 후 추가
       if (this.checkCanSamsam(canSamsamPositions[j], openTwoStones)) {
@@ -68,10 +67,12 @@ class SamsamRule {
     if (openTwos.length < 2) return false;
 
     const filteredOpenTwos = openTwos.filter((openTwo) => {
-      const sortedPositions = sortPositions([spot, ...openTwo]);
+      const positions = new Positions(spot, ...openTwo);
+      positions.sort();
+      const sortedPositions = positions.getAll();
       const first = sortedPositions[0];
       const last = sortedPositions[sortedPositions.length - 1];
-      const direction = OmokAnalyzer.getDirection(first, last);
+      const direction = Positions.getDirection(first, last);
       const reverse = direction.reverse();
       const beforeFirst = first.move(reverse.dx, reverse.dy);
       const afterLast = last.move(direction.dx, direction.dy);
@@ -92,9 +93,9 @@ class SamsamRule {
   private findCanSamsamPositions(twoStones: TwoStonePositions): Position[] {
     const result = [];
     const [first, second] = twoStones;
-    const direction = OmokAnalyzer.getDirection(first, second);
+    const direction = Positions.getDirection(first, second);
     const reverse = direction.reverse();
-    const distance = OmokAnalyzer.getDistance(first, second);
+    const distance = Positions.getDistance(first, second);
 
     const nextFirst = first.move(reverse.dx, reverse.dy);
     const afterNextFirst = first.move(reverse.dx, reverse.dy, 2);
@@ -142,6 +143,12 @@ class SamsamRule {
     }
 
     return result;
+  }
+
+  private findOpenTwos(position: Position) {
+    return this.board
+      .findConnectedStones(position, 'black', 2, { skip: 2 })
+      .filter((target) => OmokAnalyzer.checkOpenTwo(this.board, target));
   }
 }
 

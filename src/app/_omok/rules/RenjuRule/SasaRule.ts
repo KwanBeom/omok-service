@@ -1,9 +1,9 @@
-import Board from "../../core/Board";
-import OmokAnalyzer from "../../core/OmokAnalyzer";
-import Position, { Positions, sortPositions } from "../../entities/Position";
+import Board from '../../core/Board';
+import OmokAnalyzer from '../../core/OmokAnalyzer';
+import Position, { PositionTuple } from '../../entities/Position';
+import Positions from '../../entities/Positions';
 
-
-type ThreeStonePositions = Positions<3>;
+type ThreeStonePositions = PositionTuple<3>;
 
 export type SasaGeumsuDatas = { position: Position; threeStones: ThreeStonePositions[] }[];
 
@@ -22,7 +22,6 @@ class SasaGeumsu {
       const threeStones = this.board.findConnectedStones(canSasaPositions[i], 'black', 3, {
         positionIsEmpty: true,
       });
-
       if (this.checkCanSasa(canSasaPositions[i], threeStones)) {
         this.geumsuDatas.push({ position: canSasaPositions[i], threeStones });
       }
@@ -38,7 +37,6 @@ class SasaGeumsu {
       const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
       });
-
       if (canFiveInARow) return false;
 
       return this.checkCanSasa(position, threeStones);
@@ -55,11 +53,11 @@ class SasaGeumsu {
     const result: Position[] = [];
 
     for (let i = 0; i < connectedThrees.length; i += 1) {
-      const sortedPositions = sortPositions(connectedThrees[i]);
+      const sortedPositions = new Positions(...connectedThrees[i]).sort();
       const first = sortedPositions[0];
       const last = sortedPositions[2];
-      const distance = OmokAnalyzer.getDistance(first, last);
-      const direction = OmokAnalyzer.getDirection(first, last);
+      const distance = Positions.getDistance(first, last);
+      const direction = Positions.getDirection(first, last);
       const reverse = direction.reverse();
 
       const nextFirst = first.move(reverse.dx, reverse.dy);
@@ -157,15 +155,15 @@ class SasaGeumsu {
     if (!this.board.canDropStone(spot)) return false;
 
     /** spot이 간접 막혀있는지 확인 */
-    const isIndirectlyBlocked = (stones: Positions<3>) => {
-      const { dx, dy } = OmokAnalyzer.getDirection(stones[0], spot);
+    const isIndirectlyBlocked = (stones: PositionTuple<3>) => {
+      const { dx, dy } = Positions.getDirection(stones[0], spot);
       const indirectPosition = spot.move(dx, dy);
 
       return this.board.get(indirectPosition)?.color === 'white';
     };
 
     const filteredThreeStones = threeStones.filter((threeStone) => {
-      const fourStone: Positions<4> = [spot, ...threeStone];
+      const fourStone: PositionTuple<4> = [spot, ...threeStone];
 
       if (isIndirectlyBlocked(threeStone)) return false;
 

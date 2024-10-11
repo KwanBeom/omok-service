@@ -346,4 +346,26 @@ describe('33 금수 test', () => {
 
     expect(omokAfterPlay.getGeumsu().samsam).not.toContainEqual(new Position(8, 6));
   });
+
+  test('4*3 위치가 3*3으로 판별되는지 테스트', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 8),
+      new Position(8, 6),
+      new Position(6, 8),
+      new Position(9, 5),
+      new Position(6, 7),
+      new Position(8, 4),
+      new Position(8, 5),
+      new Position(10, 7),
+      new Position(9, 6),
+      new Position(10, 8),
+      new Position(9, 7),
+      new Position(10, 4),
+    ];
+
+    playStones(omok, positions);
+
+    expect(omok.getGeumsu().samsam).not.toContainEqual(new Position(10, 6));
+  });
 });

@@ -1,12 +1,12 @@
 import Board from './Board';
-import Direction from '../entities/Direction';
-import Position, { Positions, sortPositions } from '../entities/Position';
+import Position, { PositionTuple } from '../entities/Position';
+import Positions from '../entities/Positions';
 
 /** 오목 분석 클래스 */
 class OmokAnalyzer {
   /** 돌들이 나란히 이어져 있는지 확인 */
   static isSequential(positions: Position[]) {
-    const { dx, dy } = this.getDirection(positions[0], positions[positions.length - 1]);
+    const { dx, dy } = Positions.getDirection(positions[0], positions[positions.length - 1]);
 
     for (let i = 0; i < positions.length - 1; i += 1) {
       const moved = positions[i].move(dx, dy);
@@ -24,7 +24,7 @@ class OmokAnalyzer {
   static isSequentialSkipOnce(positions: Position[]) {
     let { x, y } = positions[0];
     let skip = false;
-    const { dx, dy } = this.getDirection(positions[0], positions[positions.length - 1]);
+    const { dx, dy } = Positions.getDirection(positions[0], positions[positions.length - 1]);
 
     for (let i = 0; i < positions.length - 1; i += 1) {
       const next = positions[i + 1];
@@ -44,28 +44,10 @@ class OmokAnalyzer {
     return true;
   }
 
-  /** stone1에서 stone2로 향하는 방향 구하기 */
-  static getDirection(stone1: Position, stone2: Position) {
-    const change = (n: number) => {
-      if (n < 0) return 1;
-      if (n > 0) return -1;
-      return 0;
-    };
-
-    return new Direction(change(stone1.x - stone2.x), change(stone1.y - stone2.y));
-  }
-
-  /** 두 돌 간 거리를 반환 */
-  static getDistance(position1: Position, position2: Position) {
-    const distance = Math.abs(position1.x - position2.x || position1.y - position2.y);
-
-    return distance;
-  }
-
   /** 나란히 위치한 포지션에서 띈 위치 반환 */
   static getSkippedPosition(positions: Position[]) {
-    const sortedPositions = sortPositions(positions);
-    const { dx, dy } = this.getDirection(
+    const sortedPositions = new Positions(...positions).sort();
+    const { dx, dy } = Positions.getDirection(
       sortedPositions[0],
       sortedPositions[sortedPositions.length - 1],
     );
@@ -87,10 +69,10 @@ class OmokAnalyzer {
   }
 
   /** open two인지 확인 */
-  static checkOpenTwo(board: Board, positions: Positions<2>) {
+  static checkOpenTwo(board: Board, positions: PositionTuple<2>) {
     const [position1, position2] = positions;
-    const distance = this.getDistance(position1, position2);
-    const direction = this.getDirection(position1, position2);
+    const distance = Positions.getDistance(position1, position2);
+    const direction = Positions.getDirection(position1, position2);
     const reverse = direction.reverse();
 
     const bothSideEmpty =
@@ -115,15 +97,15 @@ class OmokAnalyzer {
   }
 
   /** open three인지 확인 */
-  static checkOpenThree(board: Board, positions: Positions<3>) {
+  static checkOpenThree(board: Board, positions: PositionTuple<3>) {
     const isHaveWhite = positions.some((position) => board.get(position)?.color === 'white');
 
     if (isHaveWhite) return false;
 
-    const sortedPositions = sortPositions(positions);
+    const sortedPositions = new Positions(...positions).sort();
     const first = sortedPositions[0];
     const last = sortedPositions[sortedPositions.length - 1];
-    const direction = this.getDirection(first, last);
+    const direction = Positions.getDirection(first, last);
     const reverse = direction.reverse();
 
     const bothSideEmpty =
@@ -139,7 +121,7 @@ class OmokAnalyzer {
 
     if (isHaveConnectedStone) return false;
 
-    const distance = this.getDistance(first, last);
+    const distance = Positions.getDistance(first, last);
 
     // 붙은 3
     if (distance === 2) return this.isSequential(sortedPositions);
@@ -150,15 +132,15 @@ class OmokAnalyzer {
   }
 
   /** open four인지 확인 */
-  static checkOpenFour(board: Board, positions: Positions<4>) {
+  static checkOpenFour(board: Board, positions: PositionTuple<4>) {
     const isHaveWhite = positions.some((position) => board.get(position)?.color === 'white');
 
     if (isHaveWhite) return false;
 
-    const sortedPositions = sortPositions(positions);
+    const sortedPositions = new Positions(...positions).sort();
     const first = sortedPositions[0];
     const last = sortedPositions[sortedPositions.length - 1];
-    const direction = this.getDirection(first, last);
+    const direction = Positions.getDirection(first, last);
     const reverse = direction.reverse();
 
     const bothSideEmpty =
@@ -170,11 +152,11 @@ class OmokAnalyzer {
     // 띈 위치에 흑돌이 있는지 확인, 있는 경우 6목이 되기 때문에 false
     const isHaveConnectedStone =
       board.get(first.move(reverse.dx, reverse.dy, 2))?.color === 'black' ||
-      board.get(last.move(direction.dx, direction.dy))?.color === 'black';
+      board.get(last.move(direction.dx, direction.dy, 2))?.color === 'black';
 
     if (isHaveConnectedStone) return false;
 
-    const distance = this.getDistance(first, last);
+    const distance = Positions.getDistance(first, last);
     // 붙은 4
     if (distance === 3) return this.isSequential(sortedPositions);
     // 띈 4
@@ -184,21 +166,22 @@ class OmokAnalyzer {
   }
 
   /** 돌 하나를 추가해 오목을 만들 수 있는지 확인 */
-  static checkFour(board: Board, positions: Positions<4>) {
-    const isHaveWhite = positions.some((position) => board.get(position)?.color === 'white');
+  static checkFour(board: Board, four: PositionTuple<4>) {
+    const isHaveWhite = four.some((position) => board.get(position)?.color === 'white');
 
     if (isHaveWhite) return false;
 
-    const sortedStones = sortPositions(positions);
-    const first = sortedStones[0];
-    const last = sortedStones[sortedStones.length - 1];
-    const distance = this.getDistance(first, last);
-    const direction = this.getDirection(first, last);
+    const positions = new Positions(...four);
+    const sortedPositions = positions.sort();
+    const first = sortedPositions[0];
+    const last = sortedPositions[sortedPositions.length - 1];
+    const distance = Positions.getDistance(first, last);
+    const direction = Positions.getDirection(first, last);
     const reverse = direction.reverse();
     const { dx, dy } = direction;
 
     // 붙은 4인 경우 유효한 4인지 확인
-    if (distance === 3 && OmokAnalyzer.isSequential(sortedStones)) {
+    if (distance === 3 && this.isSequential(sortedPositions)) {
       // 한 방향이라도 열려있는지 확인해야 함
       const nextFirst = first.move(reverse.dx, reverse.dy);
       const nextLast = last.move(direction.dx, direction.dy);
@@ -221,11 +204,11 @@ class OmokAnalyzer {
     }
 
     // 띈 4인 경우 유효한 4인지 확인
-    if (distance === 4 && OmokAnalyzer.isSequentialSkipOnce(sortedStones)) {
+    if (distance === 4 && this.isSequentialSkipOnce(sortedPositions)) {
       // 양 옆이 막혀있어도 괜찮음, 띈 자리에 착수할 수 있는지만 확인
-      for (let i = 0; i < positions.length - 1; i += 1) {
-        const moved = positions[i].move(dx, dy);
-        const next = positions[i + 1];
+      for (let i = 0; i < sortedPositions.length - 1; i += 1) {
+        const moved = sortedPositions[i].move(dx, dy);
+        const next = sortedPositions[i + 1];
 
         if (!(moved.x === next.x && moved.y === next.y)) {
           return board.canDropStone(moved);

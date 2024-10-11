@@ -66,6 +66,8 @@ class JangmokRule {
     let jumpPos;
 
     while (Board.isValidStonePosition(new Position(nx, ny))) {
+      if (!Board.isValidStonePosition(new Position(nx, ny))) break;
+
       // 점프한 구간이 있고 카운트가 5가 된 경우 장목 위치 반환
       if (stoneCount === 5 && jumpPos) return jumpPos;
 

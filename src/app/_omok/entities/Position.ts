@@ -19,29 +19,9 @@ class Position {
   }
 }
 
-export default Position;
-
 /** 포지션 튜플 생성 */
-export type Positions<N extends number, R extends Position[] = []> = R['length'] extends N
+export type PositionTuple<N extends number, R extends Position[] = []> = R['length'] extends N
   ? R
-  : Positions<N, [...R, Position]>;
+  : PositionTuple<N, [...R, Position]>;
 
-/**
- * 포지션 정렬
- * @param positions 포지션 배열
- * @param descending 기본 값은 false, true로 변경시 오름차순 정렬
- * @returns 정렬된 포지션 배열
- */
-export function sortPositions<T extends Position[]>(
-  positions: T,
-  descending: boolean = false,
-): [...T] {
-  return positions.sort((prev, curr) => {
-    const { x: prevX, y: prevY } = prev;
-    const { x: currX, y: currY } = curr;
-
-    if (descending) return currX - prevX || currY - prevY;
-
-    return prevX - currX || prevY - currY;
-  });
-}
+export default Position;

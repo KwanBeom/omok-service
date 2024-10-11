@@ -1,6 +1,7 @@
 import Board from '@/app/_omok/core/Board';
 import Direction from '@/app/_omok/entities/Direction';
 import Position from '@/app/_omok/entities/Position';
+import { StoneColor } from '@/app/_omok/entities/Stone';
 
 describe('Board Class Tests', () => {
   let board: Board;
@@ -19,7 +20,7 @@ describe('Board Class Tests', () => {
     expect(result).toBe(false);
   });
 
-  test('countStones test', () => {
+  test('countStones test 1', () => {
     const positions = [
       new Position(7, 7),
       new Position(7, 8),
@@ -35,6 +36,26 @@ describe('Board Class Tests', () => {
     const result = board.countStones(new Position(7, 11), new Direction(0, -1), 'black');
 
     expect(result).toBe(5);
+  });
+
+  test('countStones test 2', () => {
+    const positions: [Position, StoneColor][] = [
+      [new Position(7, 7), 'white'],
+      [new Position(7, 8), 'black'],
+      [new Position(7, 9), 'black'],
+      [new Position(7, 10), 'black'],
+      [new Position(7, 11), 'black'],
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      const [position, stone] = positions[i];
+
+      board.dropStone(position, stone);
+    }
+
+    const result = board.countStones(new Position(7, 7), new Direction(0, 1), 'black');
+
+    expect(result).toBe(0);
   });
 
   test('countStones assumeStonePlaced option test', () => {
@@ -93,7 +114,39 @@ describe('Board Class Tests', () => {
     expect(result).toBe(5);
   });
 
-  test('countStonesInBothDirection assumeStonePlaced option test', () => {
+  test('countStonesInBothDirection skip option test', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 4),
+      new Position(7, 5),
+      new Position(7, 8),
+      new Position(7, 9),
+      new Position(7, 10),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
+    }
+
+    const expected1 = board.countStonesInBothDirections(
+      positions[0],
+      new Direction(0, -1),
+      'black',
+      { skip: true },
+    );
+
+    const expected2 = board.countStonesInBothDirections(
+      positions[0],
+      new Direction(0, 1),
+      'black',
+      { skip: true },
+    );
+
+    expect(expected1).toBe(6);
+    expect(expected2).toBe(6);
+  });
+
+  test('countStonesInBothDirection assumeStonePlaced option test 1', () => {
     const positions = [
       new Position(7, 5),
       new Position(7, 7),
@@ -148,6 +201,27 @@ describe('Board Class Tests', () => {
     expect(board.isNConnected(new Position(7, 10), 'black', 5, { assumeStonePlaced: true })).toBe(
       true,
     );
+  });
+
+  test('isNConnected test 3', () => {
+    const positions = [
+      new Position(2, 2),
+      new Position(1, 1),
+      new Position(0, 0),
+      new Position(3, 2),
+      new Position(3, 0),
+      new Position(3, 1),
+    ];
+
+    for (let i = 0; i < positions.length; i += 1) {
+      board.dropStone(positions[i], 'black');
+    }
+
+    const result = board.isNConnected(new Position(3, 3), 'black', 4, {
+      assumeStonePlaced: true,
+    });
+
+    expect(result).toBe(true);
   });
 
   describe('findConnectedStones test', () => {

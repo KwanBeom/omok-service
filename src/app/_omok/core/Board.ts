@@ -1,7 +1,8 @@
 import { DIRECTIONS, HALF_DIRECTIONS } from '../constants';
-import Position, { Positions, sortPositions } from '../entities/Position';
+import Position, { PositionTuple } from '../entities/Position';
 import Direction from '../entities/Direction';
 import Stone, { StoneColor } from '../entities/Stone';
+import Positions from '../entities/Positions';
 
 /**
  * 오목판 클래스
@@ -50,7 +51,7 @@ class Board {
     }
 
     if (this.board[x][y] !== Board.EMPTY) {
-      throw new Error('이미 돌이 놓여진 자리입니다');
+      throw new Error(`이미 돌이 놓여진 자리입니다`);
     }
 
     this.stoneCount += 1;
@@ -76,9 +77,9 @@ class Board {
     let count = 0;
     let skip = 0;
     const canSkip = options?.skip || 0;
-
     const { dx, dy } = direction;
     let { x, y } = position;
+    const anotherStone = target === 'white' ? 'black' : 'white';
 
     if (options?.assumeStonePlaced) {
       count += 1;
@@ -86,16 +87,14 @@ class Board {
       y += dy;
     }
 
-    const isValidCondition = (p: Position) => {
-      const targetCell = this.get(p);
+    while (skip <= canSkip) {
+      if (!Board.isValidStonePosition(new Position(x, y))) break;
 
-      return Board.isValidStonePosition(p) && targetCell?.color === target;
-    };
-
-    while (isValidCondition(new Position(x, y)) || skip < canSkip) {
       const targetCell = this.board[x][y];
-      if (targetCell?.color === target) count += 1;
+
+      if (targetCell?.color === anotherStone) break;
       if (targetCell === Board.EMPTY) skip += 1;
+      if (targetCell?.color === target) count += 1;
 
       x += dx;
       y += dy;
@@ -104,31 +103,39 @@ class Board {
     return count;
   }
 
-  /** 양 방향으로 돌 갯수 세는 함수 */
+  /**
+   * 양 방향으로 돌 갯수 카운팅
+   * @param options.assumeStonePlaced 돌이 놓아져있다고 가정
+   * @param options.skip skip 1회 허용
+   * @returns
+   */
   countStonesInBothDirections(
     position: Position,
     direction: Direction,
     target: StoneColor,
-    options?: { assumeStonePlaced?: boolean },
+    options?: { assumeStonePlaced?: boolean; skip?: boolean },
   ): number {
-    let total = 0;
+    let total1 = 0;
+    let total2 = 0;
     const { dx, dy } = direction;
     const reverse = direction.reverse();
 
-    // 정방향 돌 세기
-    total += this.countStones(position, new Direction(dx, dy), target, {
+    total1 += this.countStones(position, new Direction(dx, dy), target, {
+      assumeStonePlaced: options?.assumeStonePlaced,
+      skip: options?.skip ? 1 : 0,
+    });
+    total1 += this.countStones(position.move(reverse.dx, reverse.dy), direction.reverse(), target);
+
+    total2 += this.countStones(position, new Direction(dx, dy), target, {
       assumeStonePlaced: options?.assumeStonePlaced,
     });
 
-    // 반대 방향 돌 세기
-    total += this.countStones(
-      options?.assumeStonePlaced ? position.move(reverse.dx, reverse.dy) : position,
-      direction.reverse(),
-      target,
-    );
+    total2 += this.countStones(position.move(reverse.dx, reverse.dy), direction.reverse(), target, {
+      skip: options?.skip ? 1 : 0,
+    });
 
-    // assumeStonePlace 옵션이 활성화 되지 않은 경우 시작 위치가 2번 카운팅 되기 때문에 -1
-    return options?.assumeStonePlaced ? total : total - 1;
+    // 양 방향으로 탐색한 이후 더 큰 수 반환
+    return Math.max(total1, total2);
   }
 
   /** position 포함해 n개의 돌이 이어지는지 확인 */
@@ -143,6 +150,7 @@ class Board {
 
       const count = this.countStonesInBothDirections(position, direction, target, {
         assumeStonePlaced: options?.assumeStonePlaced,
+        skip: true,
       });
 
       if (count === n) return true;
@@ -164,8 +172,8 @@ class Board {
     target: StoneColor,
     count: T,
     options?: { skip?: number; positionIsEmpty?: boolean },
-  ): Positions<T>[] {
-    const result: Positions<T>[] = [];
+  ): PositionTuple<T>[] {
+    const result: PositionTuple<T>[] = [];
     const cachedPositions = new Set();
     const otherStone: StoneColor = target === 'black' ? 'white' : 'black';
     const maxSkip = options?.skip || 0;
@@ -180,40 +188,48 @@ class Board {
       return data.slice(1);
     };
 
-    const isPositionCached = (positions: Position[]) => {
-      const sortedPositions = sortPositions(positions);
+    const isPositionCached = (targetPositions: Position[]) => {
+      const positions = new Positions(...targetPositions);
+      positions.sort();
 
-      return cachedPositions.has(positionToCacheData(sortedPositions));
+      return cachedPositions.has(positionToCacheData(positions.getAll()));
     };
 
-    const cachePosition = (positions: Position[]) => {
-      const sortedPositions = sortPositions(positions);
-
-      cachedPositions.add(positionToCacheData(sortedPositions));
+    const cachePosition = (targetPositions: Position[]) => {
+      const positions = new Positions(...targetPositions);
+      positions.sort();
+      cachedPositions.add(positionToCacheData(positions.getAll()));
     };
 
     // 연결된 돌 위치 찾기
-    const find = (p: Position, d: Direction): Positions<T> | undefined => {
+    const find = (p: Position, d: Direction): PositionTuple<T> | undefined => {
       const positions: Position[] = [];
       const { dx, dy } = d;
+
       const reverse = d.reverse();
+      const { dx: rdx, dy: rdy } = reverse;
+
       let { x: cx, y: cy } = p;
       let { x: rx, y: ry } = p.move(reverse.dx, reverse.dy);
       let skipCount = 0;
 
       // 역방향 카운팅
       while (Board.isValidStonePosition(new Position(rx, ry))) {
+        if (!Board.isValidStonePosition(new Position(rx, ry))) break;
+
         const currentPosition = new Position(rx, ry);
         const currentCell = this.board[rx][ry];
 
         if (currentCell?.color === otherStone || currentCell === Board.EMPTY) break;
         if (currentCell?.color === target) positions.push(currentPosition);
 
-        rx += -dx;
-        ry += -dy;
+        rx += rdx;
+        ry += rdy;
       }
 
       while (Board.isValidStonePosition(new Position(cx, cy))) {
+        if (!Board.isValidStonePosition(new Position(cx, cy))) break;
+
         const currentPosition = new Position(cx, cy);
         const currentCell = this.get(currentPosition);
 
@@ -236,7 +252,7 @@ class Board {
           // 캐싱되지 않은 경우 캐싱하고 위치 반환
           cachePosition(positions);
 
-          return positions as Positions<T>;
+          return positions as PositionTuple<T>;
         }
 
         cx += dx;
