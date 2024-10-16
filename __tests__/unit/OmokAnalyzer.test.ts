@@ -1,46 +1,60 @@
 import OmokAnalyzer from '@/app/_omok/core/OmokAnalyzer';
-import Position, { PositionTuple } from '@/app/_omok/entities/Position';
+import Position, { IPositionTuple, PositionTuple } from '@/app/_omok/entities/Position';
 import Board from '@/app/_omok/core/Board';
+import Direction from '@/app/_omok/entities/Direction';
 
 describe('OmokAnalyzer tests', () => {
   let board: Board;
+  let omokAnalyzer: OmokAnalyzer;
 
-  const initialPositions: PositionTuple<2> = [new Position(7, 7), new Position(7, 8)];
+  const initialPositions: IPositionTuple<2> = [new Position(7, 7), new Position(7, 8)];
 
   beforeEach(() => {
     board = new Board();
+    omokAnalyzer = new OmokAnalyzer(board);
+
     for (let i = 0; i < initialPositions.length; i += 1) {
       board.dropStone(initialPositions[i], 'black');
     }
+
+    omokAnalyzer.update(board);
   });
 
-  test('getSkippedPosition test', () => {
-    const positions: PositionTuple<3> = [...initialPositions, new Position(7, 10)]; // 새로운 배열로 사용
-    const skippedPosition = OmokAnalyzer.getSkippedPosition(positions);
-    expect(skippedPosition).toContainEqual(new Position(7, 9));
+  test('getDistance test', () => {
+    const distance = OmokAnalyzer.getDistance(initialPositions[0], initialPositions[1]);
+
+    expect(distance).toBe(1);
+  });
+
+  test('getDirection test', () => {
+    const direction = OmokAnalyzer.getDirection(initialPositions[0], initialPositions[1]);
+
+    expect(direction).toEqual(new Direction(0, 1));
   });
 
   test('checkOpenTwo test', () => {
-    const positions: PositionTuple<2> = [...initialPositions]; // 새로운 배열로 사용
-    const isOpenTwo = OmokAnalyzer.checkOpenTwo(board, positions);
+    const positions: IPositionTuple<2> = [...initialPositions];
+    const isOpenTwo = omokAnalyzer.checkOpenTwo(positions);
+
     expect(isOpenTwo).toBe(true);
 
     board.dropStone(new Position(7, 9), 'white');
+    const isOpenTwoAfterBlock = omokAnalyzer.checkOpenTwo(positions);
 
-    const isOpenTwoAfterBlock = OmokAnalyzer.checkOpenTwo(board, positions);
     expect(isOpenTwoAfterBlock).toBe(false);
   });
 
   test('checkOpenThree test', () => {
     const newPosition = new Position(7, 9);
-    const positions: PositionTuple<3> = [...initialPositions, newPosition];
+
+    const positions: IPositionTuple<3> = [...initialPositions, newPosition];
 
     board.dropStone(newPosition, 'black');
-    const isOpenThree = OmokAnalyzer.checkOpenThree(board, positions);
+    const isOpenThree = omokAnalyzer.checkOpenThree(positions);
     expect(isOpenThree).toBe(true);
 
     board.dropStone(new Position(7, 10), 'white');
-    const isOpenThreeAfterBlock = OmokAnalyzer.checkOpenThree(board, positions);
+    const isOpenThreeAfterBlock = omokAnalyzer.checkOpenThree(positions);
     expect(isOpenThreeAfterBlock).toBe(false);
   });
 
@@ -51,8 +65,9 @@ describe('OmokAnalyzer tests', () => {
       board.dropStone(newPositions[i], 'black');
     }
 
-    const positions: PositionTuple<4> = [...initialPositions, ...newPositions];
-    const isOpenFour = OmokAnalyzer.checkOpenFour(board, positions);
+    const positions: IPositionTuple<4> = [...initialPositions, ...newPositions];
+    const isOpenFour = omokAnalyzer.checkOpenFour(positions);
+
     expect(isOpenFour).toBe(true);
   });
 
@@ -63,8 +78,9 @@ describe('OmokAnalyzer tests', () => {
       board.dropStone(newPositions[i], 'black');
     }
 
-    const positions: PositionTuple<4> = [...initialPositions, ...newPositions];
-    const isFour = OmokAnalyzer.checkOpenFour(board, positions);
+    const positions: IPositionTuple<4> = [...initialPositions, ...newPositions];
+
+    const isFour = omokAnalyzer.checkOpenFour(positions);
     expect(isFour).toBe(true);
 
     const blockPositions = [new Position(7, 6), new Position(7, 12)];
@@ -73,7 +89,7 @@ describe('OmokAnalyzer tests', () => {
       board.dropStone(blockPositions[i], 'white');
     }
 
-    const isFourAfterBlock = OmokAnalyzer.checkOpenFour(board, positions);
+    const isFourAfterBlock = omokAnalyzer.checkOpenFour(positions);
     expect(isFourAfterBlock).toBe(false);
   });
 });

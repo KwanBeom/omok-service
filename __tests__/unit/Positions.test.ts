@@ -1,12 +1,14 @@
 import Direction from '@/app/_omok/entities/Direction';
-import Position from '@/app/_omok/entities/Position';
+import Position, { IPosition, IPositionTuple } from '@/app/_omok/entities/Position';
 import Positions from '@/app/_omok/entities/Positions';
 
 describe('positions test', () => {
-  const positions = [new Position(7, 7), new Position(7, 8)];
+  let positions = [new Position(7, 7), new Position(7, 8)];
   const instance = new Positions(...positions);
 
   beforeEach(() => {
+    positions = [new Position(7, 7), new Position(7, 8)];
+
     instance.clear();
 
     for (let i = 0; i < positions.length; i += 1) {
@@ -28,21 +30,27 @@ describe('positions test', () => {
     expect(instance.getAll()).toEqual([new Position(7, 5), new Position(7, 7), new Position(7, 8)]);
   });
 
-  test('getDistance test', () => {
-    const distance = Positions.getDistance(positions[0], positions[1]);
+  test('getSkippedPosition test', () => {
+    const skippedPosition = Positions.getSkippedPosition([...positions, new Position(7, 10)]);
 
-    expect(distance).toBe(1);
+    expect(skippedPosition).toEqual(new Position(7, 9));
   });
 
-  test('getDirection test', () => {
-    const direction = Positions.getDirection(positions[0], positions[1]);
+  test('isSequential test', () => {
+    expect(Positions.isSequential(positions)).toBe(true);
 
-    expect(direction).toEqual(new Direction(0, 1));
+    positions.push(new Position(7, 10));
+
+    expect(Positions.isSequential(positions)).toBe(false);
   });
 
-  test('getDirection test', () => {
-    const direction = Positions.getDirection(positions[0], positions[1]);
+  test('isSequentialSkipOnce test', () => {
+    positions.push(new Position(7, 10));
 
-    expect(direction).toEqual(new Direction(0, 1));
+    expect(Positions.isSequentialSkipOnce(positions)).toBe(true);
+
+    positions.push(new Position(7, 13));
+
+    expect(Positions.isSequentialSkipOnce(positions)).toBe(false);
   });
 });

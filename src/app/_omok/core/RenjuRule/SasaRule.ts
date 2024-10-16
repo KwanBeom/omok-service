@@ -1,20 +1,23 @@
-import Board from '../../core/Board';
-import OmokAnalyzer from '../../core/OmokAnalyzer';
-import Position, { PositionTuple } from '../../entities/Position';
+import Board from '../Board';
+import OmokAnalyzer from '../OmokAnalyzer';
+import { IPosition, IPositionTuple, move } from '../../entities/Position';
 import Positions from '../../entities/Positions';
 
-type ThreeStonePositions = PositionTuple<3>;
+type ThreeStonePositions = IPositionTuple<3>;
 
-export type SasaGeumsuDatas = { position: Position; threeStones: ThreeStonePositions[] }[];
+export type SasaGeumsuDatas = { position: IPosition; threeStones: ThreeStonePositions[] }[];
 
 /** 렌주룰 4*4 금수 */
 class SasaGeumsu {
   private board = new Board();
 
-  private geumsuDatas: SasaGeumsuDatas = [];
+  private geumsu: SasaGeumsuDatas = [];
 
-  apply(board: Board, position: Position) {
+  private analyzer = new OmokAnalyzer(this.board);
+
+  apply(board: Board, position: IPosition) {
     this.board = board;
+    this.analyzer.update(board);
 
     const canSasaPositions = this.findCanSasaPositions(position);
 
@@ -23,17 +26,17 @@ class SasaGeumsu {
         positionIsEmpty: true,
       });
       if (this.checkCanSasa(canSasaPositions[i], threeStones)) {
-        this.geumsuDatas.push({ position: canSasaPositions[i], threeStones });
+        this.geumsu.push({ position: canSasaPositions[i], threeStones });
       }
     }
 
-    return this.geumsuDatas.map((data) => data.position);
+    return this.geumsu;
   }
 
   haegeum(board: Board) {
     this.board = board;
 
-    this.geumsuDatas = this.geumsuDatas.filter(({ position, threeStones }) => {
+    this.geumsu = this.geumsu.filter(({ position, threeStones }) => {
       const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
       });
@@ -42,46 +45,43 @@ class SasaGeumsu {
       return this.checkCanSasa(position, threeStones);
     });
 
-    return this.geumsuDatas.map((data) => data.position);
+    return this.geumsu;
   }
 
   /** 4*4 금수 가능한 위치 찾기 */
-  private findCanSasaPositions(position: Position): Position[] {
+  private findCanSasaPositions(position: IPosition): IPosition[] {
     const connectedThrees = this.board.findConnectedStones(position, 'black', 3, {
       skip: 2,
     });
-    const result: Position[] = [];
+    const result: IPosition[] = [];
 
     for (let i = 0; i < connectedThrees.length; i += 1) {
-      const sortedPositions = new Positions(...connectedThrees[i]).sort();
-      const first = sortedPositions[0];
-      const last = sortedPositions[2];
-      const distance = Positions.getDistance(first, last);
-      const direction = Positions.getDirection(first, last);
+      const sortedPositions = this.sortPositions(connectedThrees[i]);
+      const [first, last] = [sortedPositions[0], sortedPositions[2]];
+      const distance = OmokAnalyzer.getDistance(first, last);
+      const direction = OmokAnalyzer.getDirection(first, last);
       const reverse = direction.reverse();
 
-      const nextFirst = first.move(reverse.dx, reverse.dy);
-      const afterNextFirst = first.move(reverse.dx, reverse.dy, 2);
-      const nextLast = last.move(direction.dx, direction.dy);
-      const afterNextLast = last.move(direction.dx, direction.dy, 2);
+      const [beforeFirst, twoBeforeFirst] = [move(first, reverse), move(first, reverse, 2)];
+      const [afterLast, twoAfterLast] = [move(last, direction), move(last, direction, 2)];
 
-      const canDropNextTwoFirstStone =
-        this.board.canDropStone(nextFirst) && this.board.canDropStone(afterNextFirst);
-      const canDropNextTwoLastStone =
-        this.board.canDropStone(nextLast) && this.board.canDropStone(afterNextLast);
+      const canDropAfterTwoFirst =
+        this.board.canDropStone(beforeFirst) && this.board.canDropStone(twoBeforeFirst);
+      const canDropNextTwoLast =
+        this.board.canDropStone(afterLast) && this.board.canDropStone(twoAfterLast);
 
       switch (distance) {
         // 3이 나란히 이어져 있는 경우, (OOO)
         case 2: {
           // 다음, 다다음 위치에 돌을 둘 수 있으면 금수 가능 위치
-          if (canDropNextTwoFirstStone) {
-            result.push(afterNextFirst);
-            result.push(nextFirst);
+          if (canDropAfterTwoFirst) {
+            result.push(beforeFirst);
+            result.push(twoBeforeFirst);
           }
 
-          if (canDropNextTwoLastStone) {
-            result.push(afterNextLast);
-            result.push(nextLast);
+          if (canDropNextTwoLast) {
+            result.push(afterLast);
+            result.push(twoAfterLast);
           }
 
           break;
@@ -89,8 +89,7 @@ class SasaGeumsu {
 
         // 띈 3인 경우, (OVOO)
         case 3: {
-          const bothSideEmpty =
-            this.board.canDropStone(nextFirst) && this.board.canDropStone(nextLast);
+          const bothSideEmpty = this.analyzer.bothSideEmpty(sortedPositions);
 
           if (bothSideEmpty) {
             // 양 사이가 비어있는 경우 띈 위치 추가
@@ -98,7 +97,7 @@ class SasaGeumsu {
 
             for (let j = 0; j < sortedPositions.length; j += 1) {
               if (!(sortedPositions[j].x === x && sortedPositions[j].y === y)) {
-                result.push(new Position(x, y));
+                result.push({ x, y });
                 break;
               }
 
@@ -108,8 +107,8 @@ class SasaGeumsu {
           }
 
           // 다음, 다다음 위치가 비어있으면 다음 위치(띈 4) 추가
-          if (canDropNextTwoFirstStone) result.push(nextFirst);
-          if (canDropNextTwoLastStone) result.push(nextLast);
+          if (canDropAfterTwoFirst) result.push(beforeFirst);
+          if (canDropNextTwoLast) result.push(twoBeforeFirst);
 
           break;
         }
@@ -122,10 +121,9 @@ class SasaGeumsu {
           // 띈 위치 추가
           for (let j = 0; j < sortedPositions.length; j += 1) {
             if (!(sortedPositions[j].x === x && sortedPositions[j].y === y)) {
-              const currentPosition = new Position(x, y);
-              if (!this.board.canDropStone(currentPosition)) break;
+              if (!this.board.canDropStone({ x, y })) break;
 
-              emptyPositions.push(currentPosition);
+              emptyPositions.push({ x, y });
               j -= 1;
             }
 
@@ -149,28 +147,36 @@ class SasaGeumsu {
   }
 
   /** spot 위치가 4*4 금수 가능 위치인지 확인 */
-  private checkCanSasa(spot: Position, threeStones: ThreeStonePositions[]) {
+  private checkCanSasa(spot: IPosition, threeStones: ThreeStonePositions[]) {
+    const { x, y } = spot;
     // 교점에 이어진 3이 2개 미만인 경우 금수 불가
     if (threeStones.length < 2) return false;
-    if (!this.board.canDropStone(spot)) return false;
+    if (!this.board.canDropStone({ x, y })) return false;
 
     /** spot이 간접 막혀있는지 확인 */
-    const isIndirectlyBlocked = (stones: PositionTuple<3>) => {
-      const { dx, dy } = Positions.getDirection(stones[0], spot);
-      const indirectPosition = spot.move(dx, dy);
+    const isIndirectlyBlocked = (stones: IPositionTuple<3>) => {
+      const direction = OmokAnalyzer.getDirection(stones[0], spot);
+      const indirectPosition = move(spot, direction);
 
       return this.board.get(indirectPosition)?.color === 'white';
     };
 
     const filteredThreeStones = threeStones.filter((threeStone) => {
-      const fourStone: PositionTuple<4> = [spot, ...threeStone];
+      const fourStone: IPositionTuple<4> = [spot, ...threeStone];
 
       if (isIndirectlyBlocked(threeStone)) return false;
 
-      return OmokAnalyzer.checkFour(this.board, fourStone);
+      return this.analyzer.checkFour(fourStone);
     });
 
     return filteredThreeStones.length >= 2;
+  }
+
+  private sortPositions<N extends IPosition[]>(positions: N): IPositionTuple<N['length']> {
+    const position = new Positions(...positions);
+    position.sort();
+
+    return position.getAll();
   }
 }
 

@@ -1,27 +1,34 @@
+import { IDirection } from './Direction';
+
+export interface IPosition {
+  x: number;
+  y: number;
+}
+
 class Position {
   constructor(
     readonly x: number,
     readonly y: number,
-  ) {
-    this.x = x;
-    this.y = y;
-  }
+  ) {}
+}
 
-  /** 해당 포지션에서 이동한 새로운 포지션 반환 */
-  move(x: number, y: number, time?: number) {
-    return new Position(this.x + x * (time ?? 1), this.y + y * (time ?? 1));
-  }
+export function move(position: IPosition, direction: IDirection, time: number = 1): IPosition {
+  const { dx, dy } = direction;
 
-  isSame(position: Position) {
-    const { x, y } = position;
+  return { x: position.x + dx * (time ?? 1), y: position.y + dy * time };
+}
 
-    return this.x === x && this.y === y;
-  }
+export function isSamePosition(position1: IPosition, position2: IPosition) {
+  return position1.x === position2.x && position1.y === position2.y;
 }
 
 /** 포지션 튜플 생성 */
-export type PositionTuple<N extends number, R extends Position[] = []> = R['length'] extends N
+export type IPositionTuple<N extends number, R extends IPosition[] = []> = R['length'] extends N
   ? R
-  : PositionTuple<N, [...R, Position]>;
+  : IPositionTuple<N, [...R, IPosition]>;
+
+export type PositionTuple<N extends number, R extends IPosition[] = []> = R['length'] extends N
+  ? R
+  : PositionTuple<N, [...R, IPosition]>;
 
 export default Position;

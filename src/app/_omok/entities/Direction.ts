@@ -1,3 +1,8 @@
+export interface IDirection {
+  dx: number;
+  dy: number;
+}
+
 type DirectionXY = 0 | 1 | -1;
 
 class Direction {

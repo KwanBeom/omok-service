@@ -1,5 +1,3 @@
-import Position from './Position';
-
 export type StoneColor = 'black' | 'white';
 
 class Stone {
@@ -12,11 +10,15 @@ class Stone {
 
   constructor(
     readonly color: StoneColor,
-    readonly position?: Position,
+    readonly x: number,
+    readonly y: number,
+    readonly count?: number,
   ) {
     this.color = color;
     this.point = color === 'black' ? 1 : 2;
-    this.position = position;
+    this.x = x;
+    this.y = y;
+    this.count = count;
   }
 }
 
