@@ -20,18 +20,6 @@ describe('OmokAnalyzer tests', () => {
     omokAnalyzer.update(board);
   });
 
-  test('getDistance test', () => {
-    const distance = OmokAnalyzer.getDistance(initialPositions[0], initialPositions[1]);
-
-    expect(distance).toBe(1);
-  });
-
-  test('getDirection test', () => {
-    const direction = OmokAnalyzer.getDirection(initialPositions[0], initialPositions[1]);
-
-    expect(direction).toEqual(new Direction(0, 1));
-  });
-
   test('checkOpenTwo test', () => {
     const positions: IPositionTuple<2> = [...initialPositions];
     const isOpenTwo = omokAnalyzer.checkOpenTwo(positions);

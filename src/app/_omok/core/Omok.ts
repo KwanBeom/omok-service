@@ -5,37 +5,44 @@ import { RenjuRule } from './RenjuRule';
 import Position from '../entities/Position';
 
 class Omok {
-  private board = new Board();
-
-  private count = 0;
+  readonly board = new Board();
 
   private judge = new OmokJudge(new RenjuRule());
 
-  private moveSequence: Stone[] = [];
+  private moveHistory: Stone[] = [];
 
   /**
    * position 위치에 돌을 착수하고 다음 턴으로 넘기는 메서드
    */
   play(x: number, y: number) {
-    const stone = new Stone(Omok.getStoneColorByCount(this.count), x, y);
+    const count = this.moveHistory.length + 1;
+    const stone = new Stone(Omok.getStoneColorByCount(count), x, y);
     const position = new Position(x, y);
 
-    this.count += 1;
-    this.moveSequence.push(stone);
-    this.board.dropStone(position, Omok.getStoneColorByCount(this.count));
+    this.board.dropStone(position, Omok.getStoneColorByCount(count));
     this.judge.applyRule(this.board, position);
+    this.moveHistory.push(stone);
   }
 
-  // TODO: 되돌리기 기능 추가
+  /** 되돌리기 */
+  undo() {
+    const lastMove = this.moveHistory.pop();
+
+    if (!lastMove) return;
+
+    this.board.removeStone(lastMove);
+
+    this.judge.applyRule(this.board, this.moveHistory[this.moveHistory.length - 2]);
+  }
 
   /** 몇 수 진행되었는지 확인 */
   getCount() {
-    return this.count;
+    return this.moveHistory.length;
   }
 
   /** 승리 여부 확인 */
   checkWin() {
-    const lastMove = this.moveSequence[this.moveSequence.length - 1];
+    const lastMove = this.moveHistory[this.moveHistory.length - 1];
 
     if (!lastMove) return false;
 

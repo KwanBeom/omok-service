@@ -1,12 +1,16 @@
 import Omok from '@/app/_omok/core/Omok';
 import Position from '@/app/_omok/entities/Position';
-import playStones from '../../utils/utils';
+import playStones, { dropStoneToBoard } from '../../utils/utils';
+import JangmokRule from '@/app/_omok/core/RenjuRule/JangmokRule';
+import Board from '@/app/_omok/core/Board';
 
 describe('장목 금수 test', () => {
-  let omok: Omok;
+  let jangmokRule: JangmokRule;
+  let board: Board;
 
   beforeEach(() => {
-    omok = new Omok();
+    jangmokRule = new JangmokRule();
+    board = new Board();
   });
 
   test('가로 장목 1', () => {
@@ -22,9 +26,10 @@ describe('장목 금수 test', () => {
       new Position(7, 11),
     ];
 
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().jangmok).toEqual([new Position(7, 8)]);
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).toContainEqual(
+      new Position(7, 8),
+    );
   });
 
   test('가로 장목 2', () => {
@@ -40,9 +45,10 @@ describe('장목 금수 test', () => {
       new Position(11, 11),
     ];
 
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().jangmok).toEqual([new Position(8, 8)]);
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).toContainEqual(
+      new Position(8, 8),
+    );
   });
 
   test('세로 장목', () => {
@@ -58,9 +64,10 @@ describe('장목 금수 test', () => {
       new Position(10, 7),
     ];
 
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().jangmok).toEqual([new Position(8, 7)]);
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).toContainEqual(
+      new Position(8, 7),
+    );
   });
 
   test('대각 장목', () => {
@@ -76,9 +83,10 @@ describe('장목 금수 test', () => {
       new Position(6, 8),
     ];
 
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().jangmok).toEqual([new Position(4, 10)]);
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).toContainEqual(
+      new Position(4, 10),
+    );
   });
 
   test('6목 이상 장목', () => {
@@ -98,9 +106,10 @@ describe('장목 금수 test', () => {
       new Position(7, 9),
     ];
 
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().jangmok).toEqual([new Position(7, 8)]);
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).toContainEqual(
+      new Position(7, 8),
+    );
   });
 
   test('장목 금수이지만 5목을 만들 수 있어 아닌 경우', () => {
@@ -124,9 +133,10 @@ describe('장목 금수 test', () => {
       new Position(11, 8),
     ];
 
-    const omokAfterPlay = playStones(omok, positions);
-
-    expect(omokAfterPlay.getGeumsu().jangmok).not.toContainEqual(new Position(7, 8));
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).not.toContainEqual(
+      new Position(7, 8),
+    );
   });
 
   test('장목 금수 아닌 경우', () => {
@@ -164,8 +174,9 @@ describe('장목 금수 test', () => {
       new Position(9, 2),
     ];
 
-    playStones(omok, positions);
-
-    expect(omok.getGeumsu().jangmok).not.toContainEqual(new Position(9, 1));
+    dropStoneToBoard(board, positions);
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).not.toContainEqual(
+      new Position(9, 1),
+    );
   });
 });

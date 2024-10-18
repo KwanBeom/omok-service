@@ -1,7 +1,13 @@
 import Board from '../Board';
 import OmokAnalyzer from '../OmokAnalyzer';
-import { IPosition, IPositionTuple, move } from '../../entities/Position';
-import Positions from '../../entities/Positions';
+import {
+  deserializePosition,
+  IPosition,
+  IPositionTuple,
+  move,
+  serializePosition,
+} from '../../entities/Position';
+import PositionHelper from '../../entities/PositionHelper';
 
 type TwoStonePositions = IPositionTuple<2>;
 
@@ -9,13 +15,13 @@ export type SamsamGeumsuDatas = { position: IPosition; openTwoStones: TwoStonePo
 
 /** 렌주룰 3*3 금수 */
 class SamsamRule {
-  private geumsu: SamsamGeumsuDatas = [];
+  private geumsu = new Map<string, TwoStonePositions[]>();
 
   private board = new Board();
 
   private analyzer = new OmokAnalyzer(this.board);
 
-  apply(board: Board, position: IPosition) {
+  apply(board: Board, position: IPosition): SamsamGeumsuDatas {
     this.board = board;
     this.analyzer.update(board);
 
@@ -27,57 +33,82 @@ class SamsamRule {
     }
 
     for (let j = 0; j < canSamsamPositions.length; j += 1) {
-      // 3*3 가능 자리 기준 연결된 2 탐색, 그 중 open two
-      const openTwoStones = this.findOpenTwos(canSamsamPositions[j]);
+      const canSamsamPosition = canSamsamPositions[j];
+      const openTwoStones = this.findOpenTwos(canSamsamPosition);
 
-      // 3*3 가능한 자리가 금수 위치인지 확인 후 추가
-      if (this.checkCanSamsam(canSamsamPositions[j], openTwoStones)) {
-        this.geumsu.push({
-          position: canSamsamPositions[j],
-          openTwoStones,
-        });
+      // position을 문자열로 변환하여 Map의 키로 사용
+      const positionKey = serializePosition(canSamsamPosition);
+
+      if (this.checkCanSamsam(canSamsamPosition, openTwoStones)) {
+        const isExistGeumsuPosition = this.geumsu.has(positionKey);
+        const existOpenTwos = this.geumsu.get(positionKey);
+
+        this.geumsu.set(
+          positionKey,
+          isExistGeumsuPosition
+            ? PositionHelper.removeDuplicatePositionArray([...existOpenTwos!, ...openTwoStones]) // 중복 제거
+            : openTwoStones,
+        );
       }
     }
 
-    return this.geumsu;
+    return [...this.geumsu].map(([key, value]) => ({
+      position: deserializePosition(key),
+      openTwoStones: value,
+    }));
   }
 
-  haegeum(board: Board) {
+  haegeum(board: Board): SamsamGeumsuDatas {
     this.board = board;
 
-    this.geumsu = this.geumsu.filter(({ position, openTwoStones }) => {
-      if (!this.board.canDropStone(position)) return false;
+    this.geumsu.forEach((openTwoStones, positionKey) => {
+      const position = deserializePosition(positionKey);
+      const canDrop = this.board.canDropStone(position);
+
+      if (!canDrop) {
+        this.geumsu.delete(positionKey);
+        return;
+      }
 
       const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
       });
 
-      if (canFiveInARow) return false;
+      if (canFiveInARow) {
+        this.geumsu.delete(positionKey);
+        return;
+      }
 
-      return this.checkCanSamsam(position, openTwoStones);
+      if (!this.checkCanSamsam(position, openTwoStones)) this.geumsu.delete(positionKey);
     });
 
-    return this.geumsu;
+    return [...this.geumsu].map(([key, value]) => ({
+      position: deserializePosition(key),
+      openTwoStones: value,
+    }));
   }
 
-  /** open two들로 spot 위치가 3*3이 되는지 확인 */
+  /** twoStones들로 spot 위치가 3*3이 되는지 확인 */
   checkCanSamsam(spot: IPosition, twoStones: TwoStonePositions[]) {
     if (twoStones.length < 2) return false;
 
-    const filteredOpenTwos = twoStones.filter((twoStones) => {
-      if (!this.analyzer.checkOpenTwo(twoStones)) return false;
-      const three: IPositionTuple<3> = [spot, ...twoStones];
-      const sortedPositions = this.sortPositions(three);
+    const filteredOpenTwos = twoStones.filter((twoStone) => {
+      if (!this.analyzer.checkOpenTwo(twoStone)) return false;
+      if (twoStone.some((position) => this.board.get(position) === Board.EMPTY)) return false;
+
+      const three: IPositionTuple<3> = [spot, ...twoStone];
+
+      const sortedPositions = PositionHelper.sort(three);
       const [first, last] = [sortedPositions[0], sortedPositions[sortedPositions.length - 1]];
-      const direction = OmokAnalyzer.getDirection(first, last);
+      const direction = PositionHelper.getDirection(first, last);
       const reverse = direction.reverse();
-      const [beforeFirst, afterLast] = [move(first, reverse), move(first, direction)];
+      const [beforeFirst, afterLast] = [move(first, reverse), move(last, direction)];
 
       // 열린 3이고 다음 수순에 열린 4를 만들 수 있는지 확인
       return (
-        this.analyzer.checkOpenThree([spot, ...twoStones]) &&
-        (this.analyzer.checkOpenFour([spot, ...twoStones, beforeFirst]) ||
-          this.analyzer.checkOpenFour([spot, ...twoStones, afterLast]))
+        this.analyzer.checkOpenThree([spot, ...twoStone]) &&
+        (this.analyzer.checkOpenFour([spot, ...twoStone, beforeFirst]) ||
+          this.analyzer.checkOpenFour([spot, ...twoStone, afterLast]))
       );
     });
 
@@ -89,9 +120,9 @@ class SamsamRule {
   private findCanSamsamPositions(openTwo: TwoStonePositions): IPosition[] {
     const result = [];
     const [first, last] = openTwo;
-    const direction = OmokAnalyzer.getDirection(first, last);
+    const direction = PositionHelper.getDirection(first, last);
     const reverse = direction.reverse();
-    const distance = OmokAnalyzer.getDistance(first, last);
+    const distance = PositionHelper.getDistance(first, last);
 
     const [beforeFirst, twoBeforeFirst] = [move(first, reverse), move(first, reverse, 2)];
     const [afterLast, twoAfterLast] = [move(last, direction), move(last, direction, 2)];
@@ -143,13 +174,6 @@ class SamsamRule {
     return this.board
       .findConnectedStones(position, 'black', 2, { skip: 2 })
       .filter((target) => this.analyzer.checkOpenTwo(target));
-  }
-
-  private sortPositions<N extends IPosition[]>(positions: N): IPositionTuple<N['length']> {
-    const position = new Positions(...positions);
-    position.sort();
-
-    return position.getAll();
   }
 }
 

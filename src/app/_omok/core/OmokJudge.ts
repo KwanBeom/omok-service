@@ -2,7 +2,6 @@ import Board from './Board';
 import { HALF_DIRECTIONS } from '../constants';
 import { IPosition } from '../entities/Position';
 import { RenjuGeumsu, RenjuRule } from './RenjuRule';
-import Positions from '../entities/Positions';
 
 /** 오목 심판 클래스 */
 class OmokJudge {
@@ -19,22 +18,7 @@ class OmokJudge {
   /** 룰 적용 */
   applyRule(board: Board, position: IPosition) {
     this.board = board;
-    const geumsu = this.rule.apply(board, position);
-    const geumsuPositions = [
-      new Positions(...geumsu.samsam),
-      new Positions(...geumsu.sasa),
-      new Positions(...geumsu.jangmok),
-    ];
-
-    const [samsam, sasa, jangmok] = geumsuPositions;
-
-    for (let i = 0; i < geumsuPositions.length; i += 1) {
-      geumsuPositions[i].removeDuplicates();
-    }
-
-    this.geumsu.samsam = samsam.getAll();
-    this.geumsu.sasa = sasa.getAll();
-    this.geumsu.jangmok = jangmok.getAll();
+    this.geumsu = this.rule.apply(board, position);
   }
 
   /** 금수 위치 반환 */

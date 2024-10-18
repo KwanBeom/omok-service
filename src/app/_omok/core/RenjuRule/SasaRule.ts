@@ -1,51 +1,82 @@
 import Board from '../Board';
 import OmokAnalyzer from '../OmokAnalyzer';
-import { IPosition, IPositionTuple, move } from '../../entities/Position';
-import Positions from '../../entities/Positions';
+import {
+  deserializePosition,
+  IPosition,
+  IPositionTuple,
+  move,
+  serializePosition,
+} from '../../entities/Position';
+import PositionHelper from '../../entities/PositionHelper';
 
 type ThreeStonePositions = IPositionTuple<3>;
 
 export type SasaGeumsuDatas = { position: IPosition; threeStones: ThreeStonePositions[] }[];
 
 /** 렌주룰 4*4 금수 */
-class SasaGeumsu {
+class SasaRule {
   private board = new Board();
 
-  private geumsu: SasaGeumsuDatas = [];
+  private geumsu = new Map<string, ThreeStonePositions[]>();
 
   private analyzer = new OmokAnalyzer(this.board);
 
-  apply(board: Board, position: IPosition) {
+  apply(board: Board, position: IPosition): SasaGeumsuDatas {
     this.board = board;
     this.analyzer.update(board);
 
     const canSasaPositions = this.findCanSasaPositions(position);
 
     for (let i = 0; i < canSasaPositions.length; i += 1) {
-      const threeStones = this.board.findConnectedStones(canSasaPositions[i], 'black', 3, {
+      const canSasaPosition = canSasaPositions[i];
+
+      const threeStones = this.board.findConnectedStones(canSasaPosition, 'black', 3, {
         positionIsEmpty: true,
       });
-      if (this.checkCanSasa(canSasaPositions[i], threeStones)) {
-        this.geumsu.push({ position: canSasaPositions[i], threeStones });
+
+      const positionKey = serializePosition(canSasaPosition);
+
+      if (this.checkCanSasa(canSasaPosition, threeStones)) {
+        const isExistGeumsuPosition = this.geumsu.has(positionKey);
+        const existOpenThrees = this.geumsu.get(positionKey);
+
+        this.geumsu.set(
+          positionKey,
+          isExistGeumsuPosition
+            ? PositionHelper.removeDuplicatePositionArray([...existOpenThrees!, ...threeStones])
+            : threeStones,
+        );
       }
     }
 
-    return this.geumsu;
+    return [...this.geumsu].map(([key, value]) => ({
+      position: deserializePosition(key),
+      threeStones: value,
+    }));
   }
 
-  haegeum(board: Board) {
+  haegeum(board: Board): SasaGeumsuDatas {
     this.board = board;
 
-    this.geumsu = this.geumsu.filter(({ position, threeStones }) => {
+    this.geumsu.forEach((threeStones, positionKey) => {
+      const position = deserializePosition(positionKey);
+
       const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
       });
-      if (canFiveInARow) return false;
 
-      return this.checkCanSasa(position, threeStones);
+      if (canFiveInARow) {
+        this.geumsu.delete(positionKey);
+        return;
+      }
+
+      if (!this.checkCanSasa(position, threeStones)) this.geumsu.delete(positionKey);
     });
 
-    return this.geumsu;
+    return [...this.geumsu].map(([key, value]) => ({
+      position: deserializePosition(key),
+      threeStones: value,
+    }));
   }
 
   /** 4*4 금수 가능한 위치 찾기 */
@@ -56,12 +87,11 @@ class SasaGeumsu {
     const result: IPosition[] = [];
 
     for (let i = 0; i < connectedThrees.length; i += 1) {
-      const sortedPositions = this.sortPositions(connectedThrees[i]);
+      const sortedPositions = PositionHelper.sort(connectedThrees[i]);
       const [first, last] = [sortedPositions[0], sortedPositions[2]];
-      const distance = OmokAnalyzer.getDistance(first, last);
-      const direction = OmokAnalyzer.getDirection(first, last);
+      const distance = PositionHelper.getDistance(first, last);
+      const direction = PositionHelper.getDirection(first, last);
       const reverse = direction.reverse();
-
       const [beforeFirst, twoBeforeFirst] = [move(first, reverse), move(first, reverse, 2)];
       const [afterLast, twoAfterLast] = [move(last, direction), move(last, direction, 2)];
 
@@ -89,10 +119,10 @@ class SasaGeumsu {
 
         // 띈 3인 경우, (OVOO)
         case 3: {
-          const bothSideEmpty = this.analyzer.bothSideEmpty(sortedPositions);
-
-          if (bothSideEmpty) {
-            // 양 사이가 비어있는 경우 띈 위치 추가
+          const hasOpenSide = this.analyzer.hasOpenSide(sortedPositions);
+          // 한 방향이라도 열려있으면
+          if (hasOpenSide) {
+            // 띈 위치 추가
             let { x, y } = first;
 
             for (let j = 0; j < sortedPositions.length; j += 1) {
@@ -113,7 +143,7 @@ class SasaGeumsu {
           break;
         }
 
-        // 2칸 띈 3인 경우, (OVVOO)
+        // 2칸 띈 3인 경우, (OVVOO, OVOVO)
         case 4: {
           let { x, y } = first;
           const emptyPositions = [];
@@ -153,31 +183,15 @@ class SasaGeumsu {
     if (threeStones.length < 2) return false;
     if (!this.board.canDropStone({ x, y })) return false;
 
-    /** spot이 간접 막혀있는지 확인 */
-    const isIndirectlyBlocked = (stones: IPositionTuple<3>) => {
-      const direction = OmokAnalyzer.getDirection(stones[0], spot);
-      const indirectPosition = move(spot, direction);
-
-      return this.board.get(indirectPosition)?.color === 'white';
-    };
-
     const filteredThreeStones = threeStones.filter((threeStone) => {
+      if (threeStone.some((position) => this.board.get(position) === Board.EMPTY)) return false;
       const fourStone: IPositionTuple<4> = [spot, ...threeStone];
-
-      if (isIndirectlyBlocked(threeStone)) return false;
 
       return this.analyzer.checkFour(fourStone);
     });
 
     return filteredThreeStones.length >= 2;
   }
-
-  private sortPositions<N extends IPosition[]>(positions: N): IPositionTuple<N['length']> {
-    const position = new Positions(...positions);
-    position.sort();
-
-    return position.getAll();
-  }
 }
 
-export default SasaGeumsu;
+export default SasaRule;

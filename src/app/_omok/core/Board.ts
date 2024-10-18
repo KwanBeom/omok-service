@@ -2,7 +2,7 @@ import { DIRECTIONS, HALF_DIRECTIONS } from '../constants';
 import Position, { IPosition, IPositionTuple, isSamePosition, move } from '../entities/Position';
 import Direction from '../entities/Direction';
 import Stone, { StoneColor } from '../entities/Stone';
-import Positions from '../entities/Positions';
+import PositionHelper from '../entities/PositionHelper';
 
 /**
  * 오목판 클래스
@@ -39,9 +39,6 @@ class Board {
 
   /**
    * 보드에 돌을 착수하는 메서드
-   * @param row 열
-   * @param col 행
-   * @param stone 놓아질 돌
    */
   dropStone(position: IPosition, color: StoneColor) {
     const { x, y } = position;
@@ -56,6 +53,16 @@ class Board {
 
     this.stoneCount += 1;
     this.board[x][y] = new Stone(color, x, y);
+  }
+
+  /** 보드에서 돌을 제거하는 메서드 */
+  removeStone(position: IPosition) {
+    const { x, y } = position;
+
+    if (!Board.isValidStonePosition(position)) return;
+
+    this.board[x][y] = Board.EMPTY;
+    this.stoneCount -= 1;
   }
 
   /** 돌을 놓을 수 있는 위치인지 확인하는 함수 */
@@ -87,14 +94,16 @@ class Board {
       y += dy;
     }
 
-    while (skip <= canSkip) {
+    while (Board.isValidStonePosition({ x, y })) {
       if (!Board.isValidStonePosition({ x, y })) break;
-
       const targetCell = this.board[x][y];
 
-      if (targetCell?.color === anotherStone) break;
-      if (targetCell === Board.EMPTY) skip += 1;
       if (targetCell?.color === target) count += 1;
+      if (targetCell?.color === anotherStone) break;
+      if (targetCell === Board.EMPTY) {
+        if (skip === canSkip) break;
+        skip += 1;
+      }
 
       x += dx;
       y += dy;
@@ -124,6 +133,7 @@ class Board {
       assumeStonePlaced: options?.assumeStonePlaced,
       skip: options?.skip ? 1 : 0,
     });
+
     total1 += this.countStones(rPosition, direction.reverse(), target);
 
     total2 += this.countStones(position, new Direction(dx, dy), target, {
@@ -160,14 +170,14 @@ class Board {
   }
 
   /**
-   * position을 포함한 target의 연결된 count개 위치 찾기
+   * position을 포함한 target의 연결된 2 또는 3개 위치 찾기
    * @param position 기준 위치
    * @param target 찾을 돌
    * @param count 찾을 돌 갯수
    * @param options.skip 허용할 스킵 횟수
    * @param options.positionIsEmpty position이 공백인지 여부, true인 경우 건너뛰고 탐색
    */
-  findConnectedStones<T extends number>(
+  findConnectedStones<T extends 2 | 3>(
     position: IPosition,
     target: StoneColor,
     count: T,
@@ -188,17 +198,11 @@ class Board {
       return data.slice(1);
     };
 
-    const isPositionCached = (targetPositions: IPosition[]) => {
-      const positions = new Positions(...targetPositions);
-      positions.sort();
-
-      return cachedPositions.has(positionToCacheData(positions.getAll()));
-    };
+    const isPositionCached = (targetPositions: IPosition[]) =>
+      cachedPositions.has(positionToCacheData(PositionHelper.sort(targetPositions)));
 
     const cachePosition = (targetPositions: IPosition[]) => {
-      const positions = new Positions(...targetPositions);
-      positions.sort();
-      cachedPositions.add(positionToCacheData(positions.getAll()));
+      cachedPositions.add(positionToCacheData(PositionHelper.sort(targetPositions)));
     };
 
     // 연결된 돌 위치 찾기
