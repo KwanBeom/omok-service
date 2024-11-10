@@ -57,6 +57,6 @@ describe('positions test', () => {
   test('getDirection test', () => {
     const direction = PositionHelper.getDirection(positions[0], positions[1]);
 
-    expect(direction).toEqual(new Direction(0, 1));
+    expect(direction).toEqual(Direction.RIGHT);
   });
 });

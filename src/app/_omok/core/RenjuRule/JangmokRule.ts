@@ -1,4 +1,3 @@
-import { DIRECTIONS } from '../../constants';
 import Board from '../Board';
 import Direction from '../../entities/Direction';
 import { IPosition } from '../../entities/Position';
@@ -13,18 +12,15 @@ class JangmokRule {
   apply(board: Board, position: IPosition) {
     this.board = board;
 
-    for (let i = 0; i < DIRECTIONS.length; i += 1) {
-      const direction = DIRECTIONS[i];
-      const reverse = direction.reverse();
+    const directions = Direction.getAll();
+
+    for (let i = 0; i < directions.length; i += 1) {
+      const direction = directions[i];
+      const reverse = Direction.reverse(direction);
 
       // 반대 방향 돌 카운팅
-      const reverseDirectionStones = this.board.countStones(position, reverse, 'black') - 1;
-
-      const geumsuPosition = this.findJangmokGeumsu(
-        position,
-        direction,
-        reverseDirectionStones, // 현재 위치 돌 카운팅, 1부터 시작
-      );
+      const reverseDirectionStones = this.board.countStones(position, reverse, 'black');
+      const geumsuPosition = this.findJangmokGeumsu(position, direction, reverseDirectionStones);
 
       if (geumsuPosition) this.geumsu.push(geumsuPosition);
     }
@@ -35,8 +31,9 @@ class JangmokRule {
   haegeum(board: Board) {
     this.board = board;
     this.geumsu = this.geumsu.filter((position) => {
-      const canFiveInARow = this.board.isNConnected(position, 'black', 4, {
+      const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
+        strictMode: true,
       });
 
       if (canFiveInARow) return false;

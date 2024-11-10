@@ -1,10 +1,17 @@
 import Board from '../Board';
-import OmokAnalyzer from '../OmokAnalyzer';
-import { IPosition, isSamePosition } from '../../entities/Position';
-import Positions from '../../entities/Positions';
+import {
+  excludeTargetPositionArray,
+  IPosition,
+  IPositionTuple,
+  move,
+} from '../../entities/Position';
+import PositionHelper from '../../entities/PositionHelper';
 import JangmokRule from './JangmokRule';
 import SamsamRule, { SamsamGeumsuDatas } from './SamsamRule';
 import SasaRule from './SasaRule';
+import OmokAnalyzer from '../OmokAnalyzer';
+import Direction from '../../entities/Direction';
+import { extractPositions } from '../../utils';
 
 export type RenjuGeumsu = {
   sasa: IPosition[];
@@ -12,6 +19,7 @@ export type RenjuGeumsu = {
   jangmok: IPosition[];
 };
 
+// TODO: 거의 모든 거짓금수 테스트 케이스에 대해서 통과하였으나, 엣지 케이스가 존재해 추후 수정 필요
 /** 렌주 룰 */
 class RenjuRule {
   private rules = { samsam: new SamsamRule(), sasa: new SasaRule(), jangmok: new JangmokRule() };
@@ -20,177 +28,222 @@ class RenjuRule {
 
   private board: Board = new Board();
 
+  private analyzer = new OmokAnalyzer(this.board);
+
   /** 룰 적용 */
   apply(board: Board, position: IPosition) {
-    this.board = board;
+    this.updateBoardAndAnalazyer(board);
 
-    const count = board.getStoneCount();
+    if (board.getStoneCount() < 6) return this.geumsu;
+
     const isBlackTurn = board.get(position)?.color === 'black';
+    if (isBlackTurn) this.applyBlackRules(board, position);
 
-    if (count < 6) return this.geumsu;
-
-    // this.board.view();
-
-    if (isBlackTurn) {
-      const samsam = this.rules.samsam.apply(board, position);
-      // console.log(samsam);
-      this.geumsu.samsam = this.extractPositions(this.filterFakeGeumsu(samsam));
-      this.geumsu.sasa = this.extractPositions(this.rules.sasa.apply(board, position));
-      this.geumsu.jangmok = this.rules.jangmok.apply(board, position);
-    }
-
-    const samsam = this.rules.samsam.haegeum(board);
-    this.geumsu.samsam = this.extractPositions(this.filterFakeGeumsu(samsam));
-    this.geumsu.sasa = this.extractPositions(this.rules.sasa.haegeum(board));
-    this.geumsu.jangmok = this.rules.jangmok.haegeum(board);
-
+    this.updateGeumsuAfterMove(board);
     return this.geumsu;
   }
 
-  // 다음 수순으로 진행하고,
+  private updateBoardAndAnalazyer(board: Board) {
+    this.board = board;
+    this.analyzer.update(board);
+  }
+
+  private applyBlackRules(board: Board, position: IPosition) {
+    this.geumsu.samsam = extractPositions(
+      this.filterFakeSamsam(this.rules.samsam.apply(board, position)),
+    );
+    this.geumsu.sasa = extractPositions(this.rules.sasa.apply(board, position));
+    this.geumsu.jangmok = this.rules.jangmok.apply(board, position);
+  }
+
+  private updateGeumsuAfterMove(board: Board) {
+    this.geumsu.samsam = extractPositions(this.filterFakeSamsam(this.rules.samsam.haegeum(board)));
+    this.geumsu.sasa = extractPositions(this.rules.sasa.haegeum(board));
+    this.geumsu.jangmok = this.rules.jangmok.haegeum(board);
+  }
 
   /** 거짓 금수 필터링 */
-  private filterFakeGeumsu(samsamGeumsuDatas: SamsamGeumsuDatas) {
-    return samsamGeumsuDatas;
-
-    const canMakeFour = (position: IPosition) =>
-      this.board.isNConnected(position, 'black', 5, { assumeStonePlaced: true });
-
-    // 3*3을 이루는 2가 3개 이상인 금수 위치
-    const overTwoOpenTwoStonesSamsamDatas: SamsamGeumsuDatas = [];
-
-    for (let i = 0; i < samsamGeumsuDatas.length; i += 1) {
-      const { openTwoStones } = samsamGeumsuDatas[i];
-
-      // 띈 2인(OVVO) 경우 추가 검증, 금수 위치를 제외한 띈 위치가 4를 만들어 금수 위치를 해금할 수 있는지 경우
-      // openTwo 조건에 부합하지 않음..
-      const filteredOpenTwoStones = openTwoStones.filter((openTwoStone) => {
-        const distance = OmokAnalyzer.getDistance(...openTwoStone);
-
-        if (distance === 3) {
-          const skipPosition = Positions.getSkippedPosition(openTwoStone);
-
-          if (skipPosition) return !canMakeFour(skipPosition);
-        }
-
-        return true;
-      });
-
-      if (filteredOpenTwoStones.length >= 3) {
-        overTwoOpenTwoStonesSamsamDatas.push(samsamGeumsuDatas[i]);
-      }
-    }
-
-    // 거짓 2 필터링 데이터
+  private filterFakeSamsam(samsamGeumsuDatas: SamsamGeumsuDatas) {
     const filteredSamsamGeumsuData = samsamGeumsuDatas.filter(({ position, openTwoStones }) => {
+      // 다음 금수 위치에 착수하고 다음 수순에 열린 4를 만들 수 없는 경우에 필터링
       const filteredOpenTwos = openTwoStones.filter((openTwo) => {
-        const sortedOpenTwo = new Positions(...openTwo).sort();
-        const threePositions = new Positions(position, ...openTwo).sort();
-        const sortedThree = threePositions.getAll();
-        const distance = OmokAnalyzer.getDistance(...openTwo);
-        const threeStoneDistance = OmokAnalyzer.getDistance(sortedThree[0], sortedThree[2]);
-
-        // 3*3 금수 위치가 4를 만들어서 해금할 수 있는 경우
-
-        // OO인 경우
-        if (distance === 1) {
-          // 금수 위치까지 OOO이면 거짓 3 조건 X
-          if (threeStoneDistance === 2) return true;
-          if (threeStoneDistance === 3) {
-            const skipPosition = Positions.getSkippedPosition(sortedThree);
-
-            // OOVO 사이 V가 3*3 금수를 만드는 2의 갯수가 3개 이상인 경우, 현재 2로 3을 만들어도 해금되지 않음
-            if (
-              skipPosition &&
-              overTwoOpenTwoStonesSamsamDatas.some(({ position: pos }) =>
-                new Position(pos.x, pos.y).isSame(skipPosition),
-              )
-            )
-              return false;
-            // OOVO 사이 V가 다음 수순에 4*4가 되는 경우 거짓 금수 조건에 성립함
-            if (
-              skipPosition &&
-              this.board.isNConnected(skipPosition, 'black', 4, {
-                assumeStonePlaced: true,
-              })
-            )
-              return false;
-          }
-        }
-
-        // OVO인 경우 V 위치에 3*3 금수를 만드는 2의 갯수가 3개 이상인 경우, 현재 2가 3을 만들더라도 해금되지 않기 때문에 거짓 2
-        if (distance === 2) {
-          const skipPosition = Positions.getSkippedPosition(openTwo);
-
-          if (
-            skipPosition &&
-            overTwoOpenTwoStonesSamsamDatas.some(({ position: pos }) =>
-              new Position(pos.x, pos.y).isSame(skipPosition),
-            )
-          )
-            return false;
-        }
-
-        // OVVO인 경우 금수 위치를 제외한 V 위치에 3*3 금수를 만드는 2의 갯수가 3개 이상인 경우, 현재 2가 3을 만들더라도 해금되지 않기 때문에 거짓 2
-        if (distance === 3) {
-          const skipPosition = Positions.getSkippedPosition(sortedThree);
-
-          if (
-            skipPosition &&
-            overTwoOpenTwoStonesSamsamDatas.some(({ position: pos }) =>
-              new Position(pos.x, pos.y).isSame(skipPosition),
-            )
-          )
-            return false;
-        }
-
-        // if (this.isFakeThree(position, openTwo)) return false;
+        // 다음 수순에 열린 4를 만들 수 없는 거짓 3인 경우 필터링
+        if (this.checkFakeThree(position, openTwo)) return false;
 
         return true;
       });
 
-      // 열린 2의 수가 2개 이상인지 확인, 미만인 경우 거짓 금수
+      // 필터링 한 이후의 열린 2 갯수가 2개 이상인 경우에만 3*3 금수
       return filteredOpenTwos.length >= 2;
     });
 
     return filteredSamsamGeumsuData;
   }
 
-  // private isFakeThree(spot: IPosition, openTwo: PositionTuple<2>) {
-  //   const positions = new Positions(spot, ...openTwo);
-  //   positions.sort();
-  //   const sortedPositions = positions.getAll();
-  //   const [first, third] = [sortedPositions[0], sortedPositions[sortedPositions.length - 1]];
-  //   const direction = Positions.getDirection(first, third);
-  //   const reverse = direction.reverse();
-  //   const [beforeFirst, nextThird] = [
-  //     first.move(reverse.dx, reverse.dy),
-  //     third.move(direction.dx, direction.dy),
-  //   ];
-  //   const openTwoDistance = Positions.getDistance(...openTwo);
-  //   const distance = Positions.getDistance(sortedPositions[0], sortedPositions[2]);
-  // }
+  /** 금수 위치를 뒀을 때, 열린 4를 만들 수 없는 3인지 확인 */
+  private checkFakeThree(geumsuSpot: IPosition, openTwo: IPositionTuple<2>) {
+    const sortedThree = PositionHelper.sort([geumsuSpot, ...openTwo] as IPositionTuple<3>);
+    const [first, last] = [sortedThree[0], sortedThree[2]];
+    const threeStonesDistance = PositionHelper.getDistance(first, last);
+    const direction = PositionHelper.getDirection(first, last);
+    const skipPosition = PositionHelper.getSkippedPosition(sortedThree);
+    /** skipPosition 기준 열린 2들 */
+    const openTwosToSkipPosition = excludeTargetPositionArray(
+      this.findOpenTwos(skipPosition),
+      openTwo,
+    );
 
-  private isGeumsu(position: IPosition) {
+    if (this.canMakeFourInRow(geumsuSpot, direction)) return true;
+
+    // 금수 위치와 열린 2를 합해 이은 3인 경우, 다음 수순에 금수라면 열린 4를 만들 수 없음
+    if (threeStonesDistance === 2) {
+      return this.nextStepIsGeumsu(sortedThree, { excludedTwo: openTwo });
+    }
+
+    // 금수 위치와 열린 2를 합해 띈 3인 경우
+    if (threeStonesDistance === 3) {
+      // OOVO 사이 낀 위치가 4*4 금수가 되는 경우 열린 4 불가능
+      if (this.canMakeFour(skipPosition)) return true;
+
+      // 띈 위치가 3*3 금수인 경우
+      // 건너뛴 위치에 열린 2들 중 다음 수순에 열린 4가 가능한 열린 2가 2개 이상인 경우 다음 수순에 열린 4를 만들 수 없기 때문에 거짓 3
+      if (openTwosToSkipPosition.length >= 2) {
+        // 건너뛴 위치 열린 2들 중, 금수 위치에 착수하고 다음 수순에 열린 4가 가능한 열린 2
+        const canMakeFourOpenTwosToSkipPosition = openTwosToSkipPosition.filter(
+          (openTwoToSkipPosition) => {
+            const three: IPositionTuple<3> = [skipPosition, ...openTwoToSkipPosition];
+
+            // 다음 수순에 금수인 경우 열린 4를 만들 수 없음
+            if (this.nextStepIsGeumsu(three, { excludedTwo: openTwoToSkipPosition })) return false;
+
+            return true;
+          },
+        );
+
+        // 띈 위치에 3*3 금수를 구성하는 열린 2들 중 다음 수순에 열린 4를 만들 수 있는 열린 2가 2개 이상인 경우 거짓 2
+        if (canMakeFourOpenTwosToSkipPosition.length >= 2) return true;
+      }
+    }
+
+    return false;
+  }
+
+  /** 3이 다음 수순에 금수인지 확인, 즉 열린 4를 다음 수순에 만들 수 없는지 확인 */
+  private nextStepIsGeumsu(
+    three: IPositionTuple<3>,
+    options?: { excludedTwo?: IPositionTuple<2> },
+  ) {
+    const sortedThree = PositionHelper.sort(three);
+    const distance = PositionHelper.getDistance(sortedThree[0], sortedThree[2]);
+    const skipPosition = PositionHelper.getSkippedPosition(sortedThree);
+    const [first, last] = [sortedThree[0], sortedThree[2]];
+    const direction = PositionHelper.getDirection(first, last);
+    const reverse = Direction.reverse(direction);
+    const [beforeFirst, afterLast] = [move(first, reverse), move(last, direction)];
+    const [twoBeforeFirst, twoAfterLast] = [move(first, reverse, 2), move(last, direction, 2)];
+
+    // OOO
+    if (distance === 2) {
+      // 1. 양쪽 모두 금수인 경우 열린 4 불가능
+      if (
+        this.checkBothSideGeumsu(beforeFirst, afterLast, sortedThree, {
+          excludedTwo: options?.excludedTwo,
+        })
+      ) {
+        return true;
+      }
+
+      // 2. 이은 3에, 한 쪽은 간접 막혀있고, 열려있는 방향이 4*4 금수 또는 6목이 되는 경우 열린 4 불가능
+      if (
+        (this.isBlocked(twoBeforeFirst) && this.checkOpenSideGeumsu(afterLast, sortedThree)) ||
+        (this.isBlocked(twoAfterLast) && this.checkOpenSideGeumsu(beforeFirst, sortedThree))
+      ) {
+        return true;
+      }
+    }
+
+    // OVOO, 띈 위치가 4*4 금수, 장목 금수인지 확인
+    if (distance === 3) {
+      return this.canMakeFour(skipPosition) || this.checkJangmok([...sortedThree, skipPosition]);
+    }
+
+    return false;
+  }
+
+  /** position에 돌을 놓아 direction에 4가 만들어지는지 */
+  private canMakeFourInRow(position: IPosition, direction: Direction) {
     return (
-      this.isSasaGeumsu(position) || this.isJangmokGeumsu(position) || this.isSamsamGeumsu(position)
+      this.board.countStonesInBothDirections(position, direction, 'black', {
+        assumeStonePlaced: true,
+        skip: true,
+      }) === 4
     );
   }
 
-  private isSasaGeumsu(position: IPosition) {
-    return this.geumsu.sasa.some((geumsu) => isSamePosition(geumsu, position));
+  /** 양쪽 모두 금수인지 확인. 단, 양쪽이 모두 3*3 금수인 경우는 제외 */
+  private checkBothSideGeumsu(
+    sideA: IPosition,
+    sideB: IPosition,
+    three: IPositionTuple<3>,
+    options?: { excludedTwo?: IPositionTuple<2> },
+  ) {
+    const sortedThree = PositionHelper.sort(three);
+    const sideASasa = this.canMakeFour(sideA);
+    const sideBSasa = this.canMakeFour(sideB);
+    const sideBJangmok = this.checkJangmok([sideB, ...sortedThree]);
+    const sideAJangmok = this.checkJangmok([sideA, ...sortedThree]);
+    const sideASamsam = this.checkSamsam(sideA, options?.excludedTwo);
+    const sideBSamsam = this.checkSamsam(sideB, options?.excludedTwo);
+
+    if (sideASasa) return sideBJangmok || sideBSamsam || sideBSasa;
+    if (sideBSasa) return sideAJangmok || sideASamsam || sideASasa;
+
+    if (sideAJangmok) return sideBSamsam || sideBSasa;
+    if (sideBJangmok) return sideASamsam || sideASasa;
+
+    if (sideASamsam) return sideBJangmok || sideBSasa;
+    if (sideBSamsam) return sideAJangmok || sideASasa;
+
+    return false;
   }
 
-  private isJangmokGeumsu(position: IPosition) {
-    return this.geumsu.jangmok.some((geumsu) => isSamePosition(geumsu, position));
+  /** 열려있는 방향이 장목 혹은 44 금수인지 확인 */
+  private checkOpenSideGeumsu(openSide: IPosition, three: IPositionTuple<3>) {
+    return this.checkJangmok([openSide, ...three]) || this.canMakeFour(openSide);
   }
 
-  private isSamsamGeumsu(position: IPosition) {
-    return this.geumsu.samsam.some((geumsu) => isSamePosition(geumsu, position));
+  /** position이 3*3 금수 위치인지 확인 */
+  private checkSamsam(position: IPosition, excludedTwo?: IPositionTuple<2>) {
+    const openTwos = this.findOpenTwos(position);
+
+    if (excludedTwo) return excludeTargetPositionArray(openTwos, excludedTwo).length >= 2;
+
+    return openTwos.length >= 2;
   }
 
-  private extractPositions(data: { position: IPosition }[]) {
-    return data.map(({ position }) => position);
+  /** 4가 장목 금수 조건에 부합하는지 */
+  private checkJangmok(four: IPositionTuple<4>) {
+    const sortedFour = PositionHelper.sort(four);
+
+    // 띈 위치에 연결된 돌이 있는 경우 장목 금수
+    return this.analyzer.hasGapConnection(sortedFour);
+  }
+
+  /** 해당 위치가 보드 끝이거나 흰돌로 막혀있는 위치인지 */
+  private isBlocked(position: IPosition) {
+    return !this.board.canDropStone(position);
+  }
+
+  /** 해당 위치에 돌을 놓으면 4가 만들어지는지 */
+  private canMakeFour(position: IPosition) {
+    return this.board.isNConnected(position, 'black', 4, { assumeStonePlaced: true });
+  }
+
+  /** position 기준 열린 2 찾기 */
+  private findOpenTwos(position: IPosition) {
+    return this.board
+      .findConnectedStones(position, 'black', 2, { positionIsEmpty: true, skip: 1 })
+      .filter((target) => this.analyzer.checkOpenTwo(target));
   }
 }
 

@@ -5,9 +5,10 @@ import {
   IPosition,
   IPositionTuple,
   move,
-  serializePosition,
+  serializePosition
 } from '../../entities/Position';
 import PositionHelper from '../../entities/PositionHelper';
+import Direction from '../../entities/Direction';
 
 type ThreeStonePositions = IPositionTuple<3>;
 
@@ -26,12 +27,12 @@ class SasaRule {
     this.analyzer.update(board);
 
     const canSasaPositions = this.findCanSasaPositions(position);
-
     for (let i = 0; i < canSasaPositions.length; i += 1) {
       const canSasaPosition = canSasaPositions[i];
 
       const threeStones = this.board.findConnectedStones(canSasaPosition, 'black', 3, {
         positionIsEmpty: true,
+        skip: 1,
       });
 
       const positionKey = serializePosition(canSasaPosition);
@@ -63,6 +64,7 @@ class SasaRule {
 
       const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
+        strictMode: true,
       });
 
       if (canFiveInARow) {
@@ -91,7 +93,7 @@ class SasaRule {
       const [first, last] = [sortedPositions[0], sortedPositions[2]];
       const distance = PositionHelper.getDistance(first, last);
       const direction = PositionHelper.getDirection(first, last);
-      const reverse = direction.reverse();
+      const reverse = Direction.reverse(direction);
       const [beforeFirst, twoBeforeFirst] = [move(first, reverse), move(first, reverse, 2)];
       const [afterLast, twoAfterLast] = [move(last, direction), move(last, direction, 2)];
 
@@ -138,7 +140,7 @@ class SasaRule {
 
           // 다음, 다다음 위치가 비어있으면 다음 위치(띈 4) 추가
           if (canDropAfterTwoFirst) result.push(beforeFirst);
-          if (canDropNextTwoLast) result.push(twoBeforeFirst);
+          if (canDropNextTwoLast) result.push(afterLast);
 
           break;
         }

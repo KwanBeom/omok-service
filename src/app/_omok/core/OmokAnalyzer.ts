@@ -1,3 +1,4 @@
+import Direction from '../entities/Direction';
 import Position, { IPosition, IPositionTuple, move } from '../entities/Position';
 import PositionHelper from '../entities/PositionHelper';
 import Board from './Board';
@@ -114,7 +115,7 @@ class OmokAnalyzer {
       new Position(positions[positions.length - 1].x, positions[positions.length - 1].y),
     ];
     const direction = PositionHelper.getDirection(first, last);
-    const reverse = direction.reverse();
+    const reverse = Direction.reverse(direction);
 
     return (
       this.board.canDropStone(move(first, reverse)) &&
@@ -127,27 +128,30 @@ class OmokAnalyzer {
     const sortedPositions = PositionHelper.sort(positions);
     const [first, last] = [sortedPositions[0], sortedPositions[sortedPositions.length - 1]];
     const direction = PositionHelper.getDirection(first, last);
-    const [beforeFirst, afterLast] = [move(first, direction.reverse()), move(last, direction)];
+    const [beforeFirst, afterLast] = [
+      move(first, Direction.reverse(direction)),
+      move(last, direction),
+    ];
 
     return this.board.canDropStone(beforeFirst) || this.board.canDropStone(afterLast);
   }
 
-  /** 흰돌이 있는지 확인 */
-  private hasWhite(positions: IPosition[]) {
-    return positions.some((position) => this.board.get(position)?.color === 'white');
-  }
-
-  /** 띈 위치에 연결된 흑돌이 있는지 확인 */
-  private hasGapConnection(positions: IPosition[]) {
+  /** 띈 위치에 연결된 돌이 있는지 확인 */
+  hasGapConnection(positions: IPosition[]) {
     const first = positions[0];
     const last = positions[positions.length - 1];
     const direction = PositionHelper.getDirection(first, last);
-    const reverse = direction.reverse();
+    const reverse = Direction.reverse(direction);
 
     return (
       this.board.get(move(first, reverse, 2))?.color === 'black' ||
       this.board.get(move(last, direction, 2))?.color === 'black'
     );
+  }
+
+  /** 흰돌이 있는지 확인 */
+  private hasWhite(positions: IPosition[]) {
+    return positions.some((position) => this.board.get(position)?.color === 'white');
   }
 }
 

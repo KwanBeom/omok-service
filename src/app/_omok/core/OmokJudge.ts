@@ -1,7 +1,7 @@
 import Board from './Board';
-import { HALF_DIRECTIONS } from '../constants';
 import { IPosition } from '../entities/Position';
 import { RenjuGeumsu, RenjuRule } from './RenjuRule';
+import Direction from '../entities/Direction';
 
 /** 오목 심판 클래스 */
 class OmokJudge {
@@ -35,8 +35,10 @@ class OmokJudge {
 
     const target = board.get(position)!.color;
 
-    for (let i = 0; i < HALF_DIRECTIONS.length; i += 1) {
-      const stones = this.board.countStonesInBothDirections(position, HALF_DIRECTIONS[i], target);
+    const halfDirections = Direction.getHalf();
+
+    for (let i = 0; i < halfDirections.length; i += 1) {
+      const stones = this.board.countStonesInBothDirections(position, halfDirections[i], target);
 
       if (stones >= 5) return true; // 5개 이상의 돌이 연결되면 승리
     }

@@ -8,6 +8,7 @@ import {
   serializePosition,
 } from '../../entities/Position';
 import PositionHelper from '../../entities/PositionHelper';
+import Direction from '../../entities/Direction';
 
 type TwoStonePositions = IPositionTuple<2>;
 
@@ -25,16 +26,19 @@ class SamsamRule {
     this.board = board;
     this.analyzer.update(board);
 
-    const openTwos = this.findOpenTwos(position);
-    const canSamsamPositions: IPosition[] = [];
+    const openTwos = this.board
+      .findConnectedStones(position, 'black', 2, { skip: 2 })
+      .filter((target) => this.analyzer.checkOpenTwo(target));
 
+    const canSamsamPositions: IPosition[] = [];
     for (let i = 0; i < openTwos.length; i += 1) {
       canSamsamPositions.push(...this.findCanSamsamPositions(openTwos[i]));
     }
-
     for (let j = 0; j < canSamsamPositions.length; j += 1) {
       const canSamsamPosition = canSamsamPositions[j];
-      const openTwoStones = this.findOpenTwos(canSamsamPosition);
+      const openTwoStones = this.board
+        .findConnectedStones(canSamsamPosition, 'black', 2, { positionIsEmpty: true, skip: 1 })
+        .filter((target) => this.analyzer.checkOpenTwo(target));
 
       // position을 문자열로 변환하여 Map의 키로 사용
       const positionKey = serializePosition(canSamsamPosition);
@@ -72,6 +76,7 @@ class SamsamRule {
 
       const canFiveInARow = this.board.isNConnected(position, 'black', 5, {
         assumeStonePlaced: true,
+        strictMode: true,
       });
 
       if (canFiveInARow) {
@@ -97,11 +102,10 @@ class SamsamRule {
       if (twoStone.some((position) => this.board.get(position) === Board.EMPTY)) return false;
 
       const three: IPositionTuple<3> = [spot, ...twoStone];
-
       const sortedPositions = PositionHelper.sort(three);
       const [first, last] = [sortedPositions[0], sortedPositions[sortedPositions.length - 1]];
       const direction = PositionHelper.getDirection(first, last);
-      const reverse = direction.reverse();
+      const reverse = Direction.reverse(direction);
       const [beforeFirst, afterLast] = [move(first, reverse), move(last, direction)];
 
       // 열린 3이고 다음 수순에 열린 4를 만들 수 있는지 확인
@@ -121,7 +125,7 @@ class SamsamRule {
     const result = [];
     const [first, last] = openTwo;
     const direction = PositionHelper.getDirection(first, last);
-    const reverse = direction.reverse();
+    const reverse = Direction.reverse(direction);
     const distance = PositionHelper.getDistance(first, last);
 
     const [beforeFirst, twoBeforeFirst] = [move(first, reverse), move(first, reverse, 2)];
@@ -168,12 +172,6 @@ class SamsamRule {
     }
 
     return result;
-  }
-
-  private findOpenTwos(position: IPosition) {
-    return this.board
-      .findConnectedStones(position, 'black', 2, { skip: 2 })
-      .filter((target) => this.analyzer.checkOpenTwo(target));
   }
 }
 

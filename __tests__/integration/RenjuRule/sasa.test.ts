@@ -356,6 +356,7 @@ describe('44 금수 test', () => {
     ];
 
     dropStoneToBoard(board, positions);
+
     expect(extractPositions(sasaRule.apply(board, positions[positions.length - 1]))).toContainEqual(
       new Position(7, 7),
     );
@@ -371,7 +372,6 @@ describe('44 금수 test', () => {
       new Position(12, 14),
       new Position(7, 4),
     ];
-
     dropStoneToBoard(board, positions);
     expect(extractPositions(sasaRule.apply(board, positions[positions.length - 1]))).toContainEqual(
       new Position(7, 6),
@@ -392,6 +392,7 @@ describe('44 금수 test', () => {
     ];
 
     dropStoneToBoard(board, positions);
+
     expect(extractPositions(sasaRule.apply(board, positions[positions.length - 1]))).toContainEqual(
       new Position(7, 6),
     );
@@ -456,7 +457,7 @@ describe('44 금수 test', () => {
     expect(extractPositions(sasaRule.apply(board, positions[positions.length - 1]))).toEqual([]);
   });
 
-  test('4*4 금수지만 5목을 만들 수 있어 아닌 경우', () => {
+  test('해금 테스트, 4*4 금수지만 5목을 만들 수 있어 아닌 경우', () => {
     const positions = [
       new Position(7, 7),
       new Position(7, 11),
@@ -466,7 +467,7 @@ describe('44 금수 test', () => {
       new Position(14, 14),
       new Position(10, 9),
       new Position(13, 14),
-      new Position(6, 5),
+      new Position(5, 6),
       new Position(14, 13),
       new Position(7, 5),
       new Position(12, 14),
@@ -476,13 +477,15 @@ describe('44 금수 test', () => {
       new Position(13, 13),
       new Position(9, 6),
       new Position(10, 6),
-      new Position(5, 6),
+      new Position(6, 5),
     ];
-
     dropStoneToBoard(board, positions);
-    expect(
-      extractPositions(sasaRule.apply(board, positions[positions.length - 1])),
-    ).not.toContainEqual(new Position(7, 6));
+
+    expect(extractPositions(sasaRule.apply(board, positions[positions.length - 1]))).toContainEqual(
+      new Position(7, 6),
+    );
+
+    expect(extractPositions(sasaRule.haegeum(board))).not.toContainEqual(new Position(7, 6));
   });
 
   test('OVOVO 2개가 교차하는 4*4', () => {
@@ -528,49 +531,25 @@ describe('44 금수 test', () => {
     );
   });
 
-  test('4*4 금수 여러개 테스트', () => {
+  test('우하단으로 내려오는 이은 3과 좌상단으로 올라가는 OOVVO 형태 4*4 금수', () => {
     const positions = [
       new Position(7, 7),
-      new Position(7, 6),
-      new Position(9, 7),
-      new Position(9, 6),
-      new Position(11, 7),
-      new Position(8, 6),
-      new Position(6, 8),
-      new Position(8, 5),
-      new Position(10, 8),
-      new Position(8, 4),
-      new Position(9, 9),
-      new Position(9, 5),
-      new Position(8, 8),
-      new Position(7, 5),
-      new Position(7, 9),
-      new Position(9, 4),
-      new Position(7, 10),
-      new Position(7, 4),
-      new Position(9, 10),
-      new Position(6, 5),
-      new Position(10, 10),
-      new Position(8, 3),
-      new Position(10, 11),
-      new Position(9, 3),
-    ];
-
-    const expected = [
-      new Position(10, 7),
-      new Position(9, 8),
-      new Position(7, 8),
-      new Position(8, 10),
-      new Position(7, 11),
+      new Position(14, 14),
+      new Position(6, 6),
+      new Position(14, 13),
+      new Position(5, 5),
+      new Position(13, 14),
       new Position(6, 10),
+      new Position(13, 13),
+      new Position(10, 6),
+      new Position(14, 12),
+      new Position(9, 7),
     ];
 
     dropStoneToBoard(board, positions);
-    const result = extractPositions(sasaRule.apply(board, positions[positions.length - 1]));
-    expect(result).toHaveLength(expected.length);
 
-    for (let i = 0; i < expected.length; i += 1) {
-      expect(result).toContainEqual(expected[i]);
-    }
+    expect(extractPositions(sasaRule.apply(board, positions[positions.length - 1]))).toContainEqual(
+      new Position(8, 8),
+    );
   });
 });

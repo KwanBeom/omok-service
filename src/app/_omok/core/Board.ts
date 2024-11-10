@@ -1,5 +1,4 @@
-import { DIRECTIONS, HALF_DIRECTIONS } from '../constants';
-import Position, { IPosition, IPositionTuple, isSamePosition, move } from '../entities/Position';
+import Position, { IPosition, IPositionTuple, move } from '../entities/Position';
 import Direction from '../entities/Direction';
 import Stone, { StoneColor } from '../entities/Stone';
 import PositionHelper from '../entities/PositionHelper';
@@ -126,7 +125,7 @@ class Board {
     let total1 = 0;
     let total2 = 0;
     const { dx, dy } = direction;
-    const reverse = direction.reverse();
+    const reverse = Direction.reverse(direction);
     const rPosition = { x: position.x + reverse.dx, y: position.y + reverse.dy };
 
     total1 += this.countStones(position, new Direction(dx, dy), target, {
@@ -134,13 +133,13 @@ class Board {
       skip: options?.skip ? 1 : 0,
     });
 
-    total1 += this.countStones(rPosition, direction.reverse(), target);
+    total1 += this.countStones(rPosition, reverse, target);
 
     total2 += this.countStones(position, new Direction(dx, dy), target, {
       assumeStonePlaced: options?.assumeStonePlaced,
     });
 
-    total2 += this.countStones(rPosition, direction.reverse(), target, {
+    total2 += this.countStones(rPosition, reverse, target, {
       skip: options?.skip ? 1 : 0,
     });
 
@@ -148,22 +147,28 @@ class Board {
     return Math.max(total1, total2);
   }
 
-  /** position 포함해 n개의 돌이 이어지는지 확인 */
+  /**
+   * position 포함해 n개 돌이 이어지는지 확인
+   * @param options.strictMode n개의 돌이 정확하게 이어지는지 설정
+   */
   isNConnected(
     position: IPosition,
     target: StoneColor,
     n: number,
-    options?: { assumeStonePlaced?: boolean },
+    options?: { assumeStonePlaced?: boolean; strictMode?: boolean },
   ) {
-    for (let i = 0; i < HALF_DIRECTIONS.length; i += 1) {
-      const direction = HALF_DIRECTIONS[i];
+    const halfDirections = Direction.getHalf();
+
+    for (let i = 0; i < halfDirections.length; i += 1) {
+      const direction = halfDirections[i];
 
       const count = this.countStonesInBothDirections(position, direction, target, {
         assumeStonePlaced: options?.assumeStonePlaced,
         skip: true,
       });
 
-      if (count === n) return true;
+      if (options?.strictMode) if (count === n) return true;
+      if (!options?.strictMode) if (count >= n) return true;
     }
 
     return false;
@@ -186,7 +191,7 @@ class Board {
     const result: IPositionTuple<T>[] = [];
     const cachedPositions = new Set();
     const otherStone: StoneColor = target === 'black' ? 'white' : 'black';
-    const maxSkip = options?.skip || 0;
+    const skip = options?.skip || 0;
 
     const positionToCacheData = (positions: IPosition[]) => {
       let data = '';
@@ -206,46 +211,64 @@ class Board {
     };
 
     // 연결된 돌 위치 찾기
-    const find = (p: IPosition, d: Direction): IPositionTuple<T> | undefined => {
+    const findInDirection = (
+      p: IPosition,
+      d: Direction,
+      reverse = false, // 역방향 탐색할지에 대한 reverse
+    ): IPositionTuple<T> | undefined => {
       const positions: IPosition[] = [];
       const { dx, dy } = d;
-
-      const reverse = d.reverse();
-      const { dx: rdx, dy: rdy } = reverse;
-
       let { x: cx, y: cy } = p;
-      let { x: rx, y: ry } = move(p, reverse);
       let skipCount = 0;
 
-      // 역방향 카운팅
-      while (Board.isValidStonePosition({ x: rx, y: ry })) {
-        if (!Board.isValidStonePosition({ x: rx, y: ry })) break;
-
-        const currentPosition = new Position(rx, ry);
-        const currentCell = this.board[rx][ry];
-
-        if (currentCell?.color === otherStone || currentCell === Board.EMPTY) break;
-        if (currentCell?.color === target) positions.push(currentPosition);
-
-        rx += rdx;
-        ry += rdy;
+      // 현재 포지션이 비어있는 경우 direction만큼 이동
+      if (options?.positionIsEmpty) {
+        cx += dx;
+        cy += dy;
       }
 
-      while (Board.isValidStonePosition({ x: cx, y: cy })) {
-        if (!Board.isValidStonePosition({ x: cx, y: cy })) break;
+      // reverse true인 경우 역방향 탐색
+      if (reverse) {
+        const { dx: rdx, dy: rdy } = Direction.reverse(d);
+        let { x: rx, y: ry } = p;
+        let reverseSkipCount = 0;
 
+        while (Board.isValidStonePosition({ x: rx, y: ry })) {
+          rx += rdx;
+          ry += rdy;
+
+          const currentCell = this.get({ x: rx, y: ry });
+
+          if (currentCell?.color === otherStone) break;
+          if (currentCell === Board.EMPTY) {
+            if (reverseSkipCount === skip) break;
+
+            reverseSkipCount += 1;
+          }
+          if (currentCell?.color === target) positions.push(new Position(rx, ry));
+        }
+
+        if (positions.length) {
+          skipCount += reverseSkipCount - positions.length;
+        }
+      }
+      while (Board.isValidStonePosition({ x: cx, y: cy })) {
         const currentPosition = new Position(cx, cy);
-        const currentCell = this.get(new Position(cx, cy));
+
+        if (!Board.isValidStonePosition(currentPosition)) break;
+
+        const currentCell = this.get(currentPosition);
 
         if (currentCell?.color === otherStone) break;
-        if (currentCell?.color === target) positions.push(currentPosition);
         if (currentCell === Board.EMPTY) {
-          if (skipCount > maxSkip) break;
-          if (!options?.positionIsEmpty) skipCount += 1;
-          if (options?.positionIsEmpty && !isSamePosition(p, currentPosition)) {
-            skipCount += 1;
-          }
+          if (skipCount === skip) break;
+          skipCount += 1;
         }
+
+        if (currentCell?.color === target) positions.push(currentPosition);
+
+        cx += dx;
+        cy += dy;
 
         // 캐싱된 경우 중복 처리 방지
         if (positions.length === count && !isPositionCached(positions)) {
@@ -258,16 +281,21 @@ class Board {
 
           return positions as IPositionTuple<T>;
         }
-
-        cx += dx;
-        cy += dy;
       }
 
       return undefined;
     };
 
+    const DIRECTIONS = Direction.getAll();
+
     for (let i = 0; i < DIRECTIONS.length; i += 1) {
-      const foundPositions = find(position, DIRECTIONS[i]);
+      const foundPositions = findInDirection(position, DIRECTIONS[i]);
+
+      if (foundPositions) result.push(foundPositions);
+    }
+
+    for (let i = 0; i < DIRECTIONS.length; i += 1) {
+      const foundPositions = findInDirection(position, DIRECTIONS[i], true);
 
       if (foundPositions) result.push(foundPositions);
     }
@@ -275,7 +303,7 @@ class Board {
     return result;
   }
 
-  // TODO: 디버깅용 삭제 필요
+  // 디버깅용 메서드
   view() {
     console.log(
       this.board

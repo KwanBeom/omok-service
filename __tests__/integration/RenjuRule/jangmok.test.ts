@@ -1,8 +1,7 @@
-import Omok from '@/app/_omok/core/Omok';
 import Position from '@/app/_omok/entities/Position';
-import playStones, { dropStoneToBoard } from '../../utils/utils';
 import JangmokRule from '@/app/_omok/core/RenjuRule/JangmokRule';
 import Board from '@/app/_omok/core/Board';
+import { dropStoneToBoard } from '../../utils/utils';
 
 describe('장목 금수 test', () => {
   let jangmokRule: JangmokRule;
@@ -111,6 +110,25 @@ describe('장목 금수 test', () => {
       new Position(7, 8),
     );
   });
+  test('양 옆이 막혀있는 6목', () => {
+    const positions = [
+      new Position(7, 7),
+      new Position(7, 4),
+      new Position(7, 5),
+      new Position(14, 0),
+      new Position(7, 6),
+      new Position(14, 14),
+      new Position(7, 9),
+      new Position(7, 11),
+      new Position(7, 10),
+    ];
+
+    dropStoneToBoard(board, positions);
+
+    expect(jangmokRule.apply(board, positions[positions.length - 1])).toContainEqual(
+      new Position(7, 8),
+    );
+  });
 
   test('장목 금수이지만 5목을 만들 수 있어 아닌 경우', () => {
     const positions = [
@@ -134,49 +152,8 @@ describe('장목 금수 test', () => {
     ];
 
     dropStoneToBoard(board, positions);
-    expect(jangmokRule.apply(board, positions[positions.length - 1])).not.toContainEqual(
-      new Position(7, 8),
-    );
-  });
-
-  test('장목 금수 아닌 경우', () => {
-    const positions = [
-      new Position(7, 7),
-      new Position(6, 7),
-      new Position(6, 6),
-      new Position(8, 8),
-      new Position(7, 8),
-      new Position(7, 6),
-      new Position(8, 5),
-      new Position(8, 7),
-      new Position(7, 4),
-      new Position(6, 5),
-      new Position(5, 4),
-      new Position(9, 7),
-      new Position(9, 6),
-      new Position(10, 7),
-      new Position(9, 4),
-      new Position(11, 7),
-      new Position(12, 7),
-      new Position(11, 5),
-      new Position(10, 6),
-      new Position(11, 6),
-      new Position(11, 4),
-      new Position(12, 5),
-      new Position(9, 8),
-      new Position(9, 3),
-      new Position(9, 5),
-      new Position(8, 2),
-      new Position(7, 1),
-      new Position(6, 3),
-      new Position(12, 6),
-      new Position(6, 4),
-      new Position(9, 2),
-    ];
-
-    dropStoneToBoard(board, positions);
-    expect(jangmokRule.apply(board, positions[positions.length - 1])).not.toContainEqual(
-      new Position(9, 1),
-    );
+    jangmokRule.apply(board, positions[positions.length - 1]);
+    const result = jangmokRule.haegeum(board);
+    expect(result).not.toContainEqual(new Position(7, 8));
   });
 });

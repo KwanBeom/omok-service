@@ -23,10 +23,13 @@ describe('3*3 금수 테스트', () => {
       new Position(7, 5),
     ];
 
+    const expected = new Position(7, 7);
+
     dropStoneToBoard(board, positions);
+
     expect(
       extractPositions(samsamRule.apply(board, positions[positions.length - 1])),
-    ).toContainEqual(new Position(7, 7));
+    ).toContainEqual(expected);
   });
 
   test('한 방향만 1칸 띈 3*3 2', () => {
@@ -351,7 +354,7 @@ describe('3*3 금수 테스트', () => {
       new Position(14, 14),
       new Position(6, 8),
       new Position(13, 14),
-      new Position(9, 7),
+      new Position(8, 7),
       new Position(14, 13),
       new Position(10, 8),
       new Position(14, 12),
@@ -361,13 +364,13 @@ describe('3*3 금수 테스트', () => {
       new Position(12, 14),
       new Position(8, 9),
       new Position(11, 14),
-      new Position(8, 7),
+      new Position(9, 7),
     ];
-
     dropStoneToBoard(board, positions);
     expect(
       extractPositions(samsamRule.apply(board, positions[positions.length - 1])),
-    ).not.toContainEqual(new Position(8, 6));
+    ).toContainEqual(new Position(8, 6));
+    expect(extractPositions(samsamRule.haegeum(board))).not.toContainEqual(new Position(8, 6));
   });
 
   test('4*3 위치가 3*3으로 판별되는지 테스트', () => {

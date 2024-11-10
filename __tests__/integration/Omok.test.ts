@@ -1,6 +1,6 @@
 import Omok from '@/app/_omok/core/Omok';
 import Position from '@/app/_omok/entities/Position';
-import playStones from '../utils/utils';
+import { playStones } from '../utils/utils';
 
 describe('omok tests', () => {
   let omok: Omok;
