@@ -1,0 +1,16 @@
+.board,
+.backdrop {
+  max-width: 50rem;
+  max-height: 50rem;
+  left: 0;
+  top: 0;
+}
+
+.board {
+  background-color: var(--board-color);
+}
+
+.board-container {
+  position: relative;
+  height: 50rem;
+}

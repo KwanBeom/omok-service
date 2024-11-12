@@ -1,3 +1,33 @@
+:root {
+  /* font sizes */
+  --font-Xs-size: 1.2rem;
+  --font-Sm-size: 1.4rem;
+  --font-Md-size: 1.6rem;
+  --font-Lg-size: 1.8rem;
+  --font-Xl-size: 3rem;
+  --font-2xl-size: 4rem;
+
+  --board-color: #caab93;
+
+  /* devices */
+  --sm-mobile: 480px;
+  --mobile: 768px;
+  --tablet: 1024px;
+  --desktop: 1280px;
+  --lg-desktop: 1920px;
+}
+
+html {
+  font-size: 10px !important;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100dvw;
+  padding: 20px 0;
+  position: relative;
+}
+
 /* reset css */
 html,
 body,
