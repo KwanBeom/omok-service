@@ -27,7 +27,7 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
     ];
 
     for (let i = 0; i < positions.length; i += 1) {
-      board.dropStone(positions[i], Omok.getStoneColorByCount(i + 1));
+      board.dropStone(positions[i], i % 2 === 0 ? 'black' : 'white');
     }
 
     expect(judge.checkWin(board, positions[positions.length - 1])).toBe(true);
@@ -47,7 +47,7 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
     ];
 
     for (let i = 0; i < positions.length; i += 1) {
-      board.dropStone(positions[i], Omok.getStoneColorByCount(i + 1));
+      board.dropStone(positions[i], i % 2 === 0 ? 'black' : 'white');
     }
 
     expect(judge.checkWin(board, positions[positions.length - 1])).toBe(true);
@@ -68,7 +68,7 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
     ];
 
     for (let i = 0; i < positions.length; i += 1) {
-      board.dropStone(positions[i], Omok.getStoneColorByCount(i + 1));
+      board.dropStone(positions[i], i % 2 === 0 ? 'black' : 'white');
     }
 
     expect(judge.checkWin(board, positions[positions.length - 1])).toBe(true);
@@ -89,7 +89,7 @@ describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
     ];
 
     for (let i = 0; i < positions.length; i += 1) {
-      board.dropStone(positions[i], Omok.getStoneColorByCount(i + 1));
+      board.dropStone(positions[i], i % 2 === 0 ? 'black' : 'white');
     }
 
     expect(judge.checkWin(board, positions[positions.length - 1])).toBe(true);

@@ -2,6 +2,7 @@ import Board from './Board';
 import { IPosition } from '../entities/Position';
 import { RenjuGeumsu, RenjuRule } from './RenjuRule';
 import Direction from '../entities/Direction';
+import { StoneColor } from '../entities/Stone';
 
 /** 오목 심판 클래스 */
 class OmokJudge {
@@ -44,6 +45,11 @@ class OmokJudge {
     }
 
     return false;
+  }
+
+  /** 현재 턴에 착수해야 할 돌의 색을 반환 */
+  getCurrentStoneColor(): StoneColor {
+    return this.board.getStoneCount() % 2 === 0 ? 'black' : 'white';
   }
 }
 

@@ -25,6 +25,7 @@ describe('omok tests', () => {
     ];
 
     playStones(omok, positions);
+    omok.board.view();
 
     expect(omok.board.getStoneCount()).toBe(positions.length);
     expect(omok.getGeumsu().samsam).toContainEqual(new Position(7, 8));
@@ -40,7 +41,6 @@ describe('omok tests', () => {
     expect(omok.board.getStoneCount()).toBe(positions.length - undo);
     const result = omok.getGeumsu().samsam;
     expect(result).toHaveLength(expected.length);
-
     for (let i = 0; i < expected.length; i += 1) {
       expect(result).toContainEqual(expected[i]);
     }
