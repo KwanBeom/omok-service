@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
-import { calculateCellSize } from '../utils/BoardUI.utils';
 
-const useCellSize = (canvas: HTMLCanvasElement | null, boardSize: number, pixelOffset: number) => {
+/** board UI의 cell size를 상태로 반환 */
+const useCellSize = (
+  canvas: HTMLCanvasElement | null,
+  boardSize: number,
+  boardPadding?: number,
+) => {
   const [cellSize, setCellSize] = useState(0);
 
   useEffect(() => {
     if (canvas) {
-      const newCellSize = calculateCellSize(canvas.offsetWidth, boardSize) - pixelOffset;
+      // board에 padding이 존재하는 경우 캔버스의 너비에서 빼줌
+      const newCellSize = (canvas.offsetWidth - (boardPadding || 0 * 2)) / boardSize;
       setCellSize(newCellSize);
     }
-  }, [canvas, pixelOffset, boardSize]);
+  }, [canvas, boardSize, boardPadding]);
 
   return cellSize;
 };

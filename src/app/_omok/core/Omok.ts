@@ -40,6 +40,10 @@ class Omok {
   getGeumsu() {
     return this.judge.getGeumsuPositions();
   }
+
+  getCurrentTurn() {
+    return this.judge.getCurrentStoneColor();
+  }
 }
 
 export default Omok;

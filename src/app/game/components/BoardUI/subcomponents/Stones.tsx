@@ -1,30 +1,26 @@
+import { useEffect } from 'react';
 import { Position } from '@/app/game/types/Position';
-import { useEffect, useState } from 'react';
-import { BOARD_SIZE, CONFIG } from '../constants';
-import { useCanvasContext } from '../context/CanvasContext';
-import { calculateCellSize, calculateStoneSize, getBoardCoordinate } from '../utils/BoardUI.utils';
+import { CONFIG } from '../constants';
+import { useCanvasContext } from '../contexts/CanvasContext';
+import { getBoardCoordinate } from '../utils/BoardUI.utils';
+import useCellSize from '../hooks/useCellSize';
 
 export type Stone = { position: Position; color: 'white' | 'black' };
 
-const { LINE_WIDTH } = CONFIG;
+const { LINE_WIDTH, BOARD, RATIO } = CONFIG;
 
 /** 오목판 위에 돌을 그리는 컴포넌트 */
 function Stones({ stones }: { stones: Stone[] }) {
-  const { context } = useCanvasContext();
-  const [cellSize, setCellSize] = useState(0);
-  const stoneSize = calculateStoneSize(cellSize);
-
-  useEffect(() => {
-    if (context?.canvas) {
-      setCellSize(calculateCellSize(context.canvas.offsetWidth, BOARD_SIZE));
-    }
-  }, [context]);
+  const { canvasRef, context } = useCanvasContext();
+  const cellSize = useCellSize(canvasRef.current, BOARD.SIZE, BOARD.PADDING) * RATIO;
+  const stoneSize = cellSize * 0.45;
 
   useEffect(() => {
     if (!context) return;
+
     stones.forEach((stone) => {
       const { position, color } = stone;
-      const coord = getBoardCoordinate(position, cellSize);
+      const coord = getBoardCoordinate(position, cellSize, BOARD.PADDING);
 
       context.lineWidth = LINE_WIDTH.STONE;
       context.beginPath();
