@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import useCanvas2D from '@/hooks/useCanvas2D';
 import { CANVAS, CONFIG, PIXEL_OFFSET } from '../constants';
-import useCellSize from '../hooks/useCellSize';
 import styles from '../styles/Background.module.css';
+import { calculateSizes } from '../utils/BoardUI.utils';
 
 const { COLOR, LINE_WIDTH, BOARD, RATIO } = CONFIG;
 
@@ -54,18 +54,17 @@ function drawGrid(
 /** 오목판 배경 */
 function BoardBackground() {
   const { context, canvasRef } = useCanvas2D();
-  const canvas = canvasRef.current;
-  const cellSize = useCellSize(canvas, BOARD.SIZE, BOARD.PADDING) * RATIO;
 
   // 오목판 그리기
   useEffect(() => {
-    if (context && cellSize > 0) {
+    if (context) {
+      const { cellSize } = calculateSizes(context.canvas, BOARD.SIZE, BOARD.PADDING, RATIO);
       context.translate((BOARD.PADDING / 2) * RATIO, (BOARD.PADDING / 2) * RATIO);
       drawGrid(context, cellSize, BOARD.SIZE, PIXEL_OFFSET);
       drawDots(context, cellSize, BOARD.SIZE, PIXEL_OFFSET);
       context.translate((-BOARD.PADDING / 2) * RATIO, (BOARD.PADDING / 2) * RATIO);
     }
-  }, [cellSize, context]);
+  }, [context]);
 
   return (
     <canvas

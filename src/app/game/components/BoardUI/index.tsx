@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Canvas, useCanvasContext } from './contexts/CanvasContext';
 import styles from './styles/BoardUI.module.css';
-import useCellSize from './hooks/useCellSize';
 import { CANVAS, CONFIG } from './constants';
 import { Position } from '../../types/Position';
 import Stones, { Stone } from './subcomponents/Stones';
 import GeumsuOverlay, { Geumsu } from './subcomponents/GeumsuOverlay';
 import BoardBackground from './subcomponents/Background';
+import PositionHilight from './subcomponents/PositionHighlight';
+import { calculateSizes } from './utils/BoardUI.utils';
 
 const { BOARD, RATIO } = CONFIG;
 
@@ -24,15 +25,14 @@ function BoardUI({
   geumsu: Geumsu[];
   onClick?: (position: Position) => void;
 }) {
-  const { canvasRef } = useCanvasContext();
-  const [selectedPosition, setSelectedPosition] = useState<Position | undefined>();
+  const { context, canvasRef } = useCanvasContext();
   const canvas = canvasRef.current;
-  const cellSize = useCellSize(canvas, BOARD.SIZE, BOARD.PADDING) * RATIO;
+  const [selectedPosition, setSelectedPosition] = useState<Position | undefined>();
 
   useEffect(() => {
     const handleCanvasClick = (e: MouseEvent) => {
       if (!canvas) return;
-
+      const { cellSize } = calculateSizes(canvas, BOARD.SIZE, BOARD.PADDING, RATIO);
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left - BOARD.PADDING / 2;
       const y = e.clientY - rect.top - BOARD.PADDING / 2;
@@ -48,7 +48,7 @@ function BoardUI({
     return () => {
       if (canvas) canvas.removeEventListener('click', handleCanvasClick);
     };
-  }, [canvas, cellSize]);
+  }, [canvas, context]);
 
   useEffect(() => {
     if (onClick && selectedPosition) onClick(selectedPosition);
@@ -64,6 +64,7 @@ function BoardUI({
       <BoardBackground />
       <Stones stones={stones} />
       {player === 'black' && <GeumsuOverlay geumsu={geumsu} turn={turn} />}
+      <PositionHilight position={selectedPosition} />
     </>
   );
 }
