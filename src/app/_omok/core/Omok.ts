@@ -15,7 +15,6 @@ class Omok {
   play(x: number, y: number) {
     const stone = new Stone(this.judge.getCurrentStoneColor(), x, y);
     const position = new Position(x, y);
-
     this.board.dropStone(position, this.judge.getCurrentStoneColor());
     this.judge.applyRule(this.board, position);
     this.historyManager.addMove(stone);
@@ -24,7 +23,6 @@ class Omok {
   undo() {
     const lastMove = this.historyManager.undoMove();
     if (!lastMove) return;
-
     this.board.removeStone(lastMove);
     const prevMove = this.historyManager.getLastMove();
     this.judge.applyRule(this.board, prevMove);
@@ -33,7 +31,6 @@ class Omok {
   checkWin() {
     const lastMove = this.historyManager.getLastMove();
     if (!lastMove) return false;
-
     return this.judge.checkWin(this.board, lastMove);
   }
 

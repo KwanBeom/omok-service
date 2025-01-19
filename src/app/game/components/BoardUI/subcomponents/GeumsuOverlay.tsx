@@ -28,7 +28,7 @@ function GeumsuOverlay({ geumsu, turn }: { geumsu: Geumsu[]; turn: 'black' | 'wh
       for (let i = 0; i < positions.length; i += 1) {
         const { position, type } = positions[i];
         const coord = getBoardCoordinate(position, cellSize, BOARD.PADDING);
-
+  
         context.beginPath();
         context.arc(coord.x, coord.y, stoneSize, 0, Math.PI * 2);
         context.strokeStyle = COLOR.GEUMSU;

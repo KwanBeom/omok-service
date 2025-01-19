@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { Position } from '@/app/game/types/Position';
+import { STONE } from '@/app/game/types/Stone';
 import { CONFIG } from '../constants';
 import { useCanvasContext } from '../contexts/CanvasContext';
 import { calculateSizes } from '../utils/BoardUI.utils';
 import { getBoardCoordinate } from '../helpers/canvasHelper';
 
-export type Stone = { position: Position; color: 'white' | 'black' };
+export type Stone = { position: Position; color: STONE };
 
 const { LINE_WIDTH, BOARD, RATIO } = CONFIG;
 
@@ -28,7 +29,7 @@ function Stones({ stones }: { stones: Stone[] }) {
 
       context.lineWidth = LINE_WIDTH.STONE;
       context.beginPath();
-      context.fillStyle = color;
+      context.fillStyle = color === 1 ? 'black' : 'white';
       context.arc(coord.x, coord.y, stoneSize, 0, Math.PI * 2);
       context.fill();
     });
