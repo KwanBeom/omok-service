@@ -1,28 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Position } from '@/app/game/types/Position';
-import { useCanvasContext } from '../contexts/CanvasContext';
+import { isSamePosition } from '@/app/_omok/entities/Position';
+import { useCanvasContext } from '../../../contexts/CanvasContext';
 import { CONFIG } from '../constants';
-import { calculateSizes } from '../utils/BoardUI.utils';
+import { calculateSizes, isValidPosition } from '../utils/BoardUI.utils';
 import { getBoardCoordinate } from '../helpers/canvasHelper';
 
 const { BOARD, RATIO, COLOR, LINE_WIDTH } = CONFIG;
 
-function PositionHilight({ position }: { position?: Position }) {
-  const { context } = useCanvasContext();
+function PositionHighlight({ position }: { position?: Position }) {
+  const { context, boardPadding } = useCanvasContext();
   const [prev, setPrev] = useState<Position>();
 
-  const draw = (
-    ctx: CanvasRenderingContext2D,
-    p: Position,
-    cellSize: number,
-    fillColor: string = COLOR.HIGHLIGHT.FILL,
-    strokeColor: string = COLOR.HIGHLIGHT.STROKE,
-    lineWidth: number = LINE_WIDTH.HIGHLIGHT,
-  ) => {
-    const coord = getBoardCoordinate(p, cellSize, BOARD.PADDING);
-    const triangleSize = cellSize * 0.3;
+  /* 포지션 하이라이트 작은 삼각형 좌표 */
+  const getTriangleCoordinates = (cellSize: number) => {
     const halfCell = cellSize / 2;
-    const triangleCoordinates = [
+    const triangleSize = cellSize * 0.3;
+    return [
       // 좌상
       [
         { x: -halfCell, y: -halfCell },
@@ -48,43 +42,74 @@ function PositionHilight({ position }: { position?: Position }) {
         { x: halfCell - triangleSize, y: -halfCell },
       ],
     ];
-
-    const drawTriangle = (x: number, y: number, vertices: Position[]) => {
-      ctx.beginPath();
-      ctx.moveTo(x + vertices[0].x, y + vertices[0].y);
-      ctx.lineTo(x + vertices[1].x, y + vertices[1].y);
-      ctx.lineTo(x + vertices[2].x, y + vertices[2].y);
-      ctx.closePath();
-      // 삼각형 내부 채우기
-      ctx.fillStyle = fillColor;
-      ctx.fill();
-      // 외곽선
-      ctx.lineWidth = lineWidth;
-      ctx.strokeStyle = strokeColor;
-      ctx.stroke();
-    };
-
-    triangleCoordinates.forEach((vertices) => {
-      drawTriangle(coord.x, coord.y, vertices);
-    });
   };
 
   useEffect(() => {
-    if (!context) return;
-    const { cellSize } = calculateSizes(context.canvas, BOARD.SIZE, BOARD.PADDING, RATIO);
+    if (!context && !context) return;
 
-    if (position) {
-      draw(context, position, cellSize);
+    // 하이라이트 그리는 함수
+    const drawHighlight = (ctx: CanvasRenderingContext2D, p: Position, cellSize: number) => {
+      const { x, y } = getBoardCoordinate(p, cellSize, boardPadding);
+      // 작은 삼각형들 좌표
+      const triangleCoordinates = getTriangleCoordinates(cellSize);
+
+      triangleCoordinates.forEach((vertices) => {
+        ctx.beginPath();
+        ctx.moveTo(x + vertices[0].x, y + vertices[0].y);
+        ctx.lineTo(x + vertices[1].x, y + vertices[1].y);
+        ctx.lineTo(x + vertices[2].x, y + vertices[2].y);
+        ctx.closePath();
+        // 삼각형 내부 채우기
+        ctx.fillStyle = COLOR.HIGHLIGHT.FILL;
+        ctx.fill();
+        // 외곽선 스타일 지정 및 그리기
+        ctx.lineWidth = LINE_WIDTH.HIGHLIGHT;
+        ctx.strokeStyle = COLOR.HIGHLIGHT.STROKE;
+        ctx.stroke();
+      });
+    };
+
+    const removeHighlight = (ctx: CanvasRenderingContext2D, p: Position, cellSize: number) => {
+      const { x, y } = getBoardCoordinate(p, cellSize, boardPadding);
+      // 작은 삼각형들 좌표
+      const triangleCoordinates = getTriangleCoordinates(cellSize);
+
+      triangleCoordinates.forEach((vertices) => {
+        ctx.beginPath();
+        ctx.moveTo(x + vertices[0].x, y + vertices[0].y);
+        ctx.lineTo(x + vertices[1].x, y + vertices[1].y);
+        ctx.lineTo(x + vertices[2].x, y + vertices[2].y);
+
+        ctx.closePath();
+        // 채우기
+        ctx.fillStyle = COLOR.BOARD;
+        ctx.fill();
+        // 외곽선 스타일 지정 및 그리기
+        ctx.lineWidth = LINE_WIDTH.BOARD;
+        ctx.strokeStyle = COLOR.BOARD;
+        ctx.stroke();
+      });
+    };
+
+    const { cellSize } = calculateSizes(
+      context.canvas.offsetWidth,
+      BOARD.SIZE,
+      boardPadding,
+      RATIO,
+    );
+
+    // 하이라이트 그리기 + 이전 좌표 저장
+    if (position && isValidPosition(position, BOARD.SIZE)) {
+      drawHighlight(context, position, cellSize);
       setPrev(position);
     }
 
-    if (prev) {
-      if (prev.x === position?.x && prev.y === position?.y) return;
-      draw(context, prev, cellSize, COLOR.BOARD, COLOR.BOARD, LINE_WIDTH.HIGHLIGHT * 3);
+    if (prev && position && !isSamePosition(prev, position)) {
+      removeHighlight(context, prev, cellSize);
     }
-  }, [position, prev, context]);
+  }, [position, context, boardPadding]);
 
   return null;
 }
 
-export default PositionHilight;
+export default PositionHighlight;

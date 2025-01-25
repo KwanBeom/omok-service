@@ -1,34 +1,35 @@
 import { useEffect, useState } from 'react';
 import Position from '@/app/_omok/entities/Position';
-import { useCanvasContext } from '../contexts/CanvasContext';
+import { BLACK, WHITE } from '@/app/game/constants/Player';
+import { Geumsu } from '@/app/game/types/Geumsu';
+import { useOmokContext } from '@/app/game/contexts/OmokContext';
+import { useCanvasContext } from '../../../contexts/CanvasContext';
 import { CONFIG, PIXEL_OFFSET } from '../constants';
 import { calculateSizes } from '../utils/BoardUI.utils';
 import { drawXInArc, getBoardCoordinate, writeTextInCenter } from '../helpers/canvasHelper';
 
 const { COLOR, LINE_WIDTH, BOARD, RATIO } = CONFIG;
 
-export type Geumsu = { position: Position; type: '33' | '44' | '6+' };
-
 /** 오목판 위 금수 UI를 그리는 컴포넌트 */
-function GeumsuOverlay({ geumsu, turn }: { geumsu: Geumsu[]; turn: 'black' | 'white' }) {
+function GeumsuOverlay({ geumsu }: { geumsu: Geumsu[] }) {
   const [prev, setPrev] = useState<Position[]>([]);
-  const { context } = useCanvasContext();
+  const { context, boardPadding } = useCanvasContext();
+  const { turn } = useOmokContext();
 
   // 금수 UI 그리기
   useEffect(() => {
     const drawGeumsu = (positions: Geumsu[]) => {
-      if (!context) return;
+      if (!context && !context) return;
       const { cellSize, stoneSize } = calculateSizes(
-        context.canvas,
+        context.canvas.offsetWidth,
         BOARD.SIZE,
-        BOARD.PADDING,
+        boardPadding,
         RATIO,
       );
 
       for (let i = 0; i < positions.length; i += 1) {
         const { position, type } = positions[i];
-        const coord = getBoardCoordinate(position, cellSize, BOARD.PADDING);
-  
+        const coord = getBoardCoordinate(position, cellSize, boardPadding);
         context.beginPath();
         context.arc(coord.x, coord.y, stoneSize, 0, Math.PI * 2);
         context.strokeStyle = COLOR.GEUMSU;
@@ -41,18 +42,18 @@ function GeumsuOverlay({ geumsu, turn }: { geumsu: Geumsu[]; turn: 'black' | 'wh
       }
     };
 
-    if (context && turn === 'black') {
+    if (context && turn === BLACK) {
       drawGeumsu(geumsu);
       setPrev(geumsu.map((g) => g.position));
     }
-  }, [geumsu, context, turn]);
+  }, [geumsu, context, turn, boardPadding]);
 
   useEffect(() => {
-    if (!context) return;
+    if (!context && !context) return;
     const { cellSize, stoneSize } = calculateSizes(
-      context.canvas,
+      context.canvas.offsetWidth,
       BOARD.SIZE,
-      BOARD.PADDING,
+      boardPadding,
       RATIO,
     );
 
@@ -61,7 +62,7 @@ function GeumsuOverlay({ geumsu, turn }: { geumsu: Geumsu[]; turn: 'black' | 'wh
       if (!context) return;
 
       positions.forEach((position) => {
-        const coord = getBoardCoordinate(position, cellSize, BOARD.PADDING);
+        const coord = getBoardCoordinate(position, cellSize, boardPadding);
         context.clearRect(
           coord.x - (stoneSize + LINE_WIDTH.STONE + PIXEL_OFFSET),
           coord.y - (stoneSize + LINE_WIDTH.STONE + PIXEL_OFFSET),
@@ -72,12 +73,12 @@ function GeumsuOverlay({ geumsu, turn }: { geumsu: Geumsu[]; turn: 'black' | 'wh
     };
 
     // 백돌 턴일 때 이전 금수 UI 지우기
-    if (turn === 'white') {
+    if (turn === WHITE) {
       context.save();
       removeGeumsu(prev);
       context.restore();
     }
-  }, [turn, context, prev]);
+  }, [turn, context, prev, boardPadding]);
 
   return null;
 }

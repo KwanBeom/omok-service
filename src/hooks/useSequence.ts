@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-type Sequence = { position: { x: number; y: number }; color: 1 | 2 };
+export type Sequence = { position: { x: number; y: number }; color: 1 | 2 };
 /**
  * 오목돌이 놓아진 순서를 관리하는 커스텀 훅
  * @returns {Array<Array<number>>} board

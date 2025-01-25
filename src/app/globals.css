@@ -23,7 +23,8 @@ html {
 }
 
 body {
-  width: 100dvw;
+  width: min(100%, 500px);
+  margin: 0 auto;
   padding: 20px 0;
   position: relative;
 }

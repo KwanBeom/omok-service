@@ -1,27 +1,46 @@
-import React, { createContext, useContext, useRef, useEffect, ReactNode, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useRef,
+  useEffect,
+  ReactNode,
+  useMemo,
+  useState,
+} from 'react';
+import { CONFIG } from '../components/BoardUI/constants';
 
 interface CanvasContextProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   context: CanvasRenderingContext2D | null;
+  canvasSize: number;
+  boardPadding: number;
 }
 
 const CanvasContext = createContext<CanvasContextProps | null>(null);
 
 interface CanvasProviderProps {
+  canvasSize: number;
   children: ReactNode;
 }
 
-export function CanvasProvider({ children }: CanvasProviderProps) {
+export function CanvasProvider({ canvasSize, children }: CanvasProviderProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [context, setContext] = React.useState<CanvasRenderingContext2D | null>(null);
+  const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
+  const [boardPadding, setBoardPadding] = useState(0);
 
   useEffect(() => {
     if (canvasRef.current) {
       setContext(canvasRef.current.getContext('2d'));
     }
-  }, []);
+    if (canvasSize) {
+      setBoardPadding(canvasSize / CONFIG.RATIO / 8);
+    }
+  }, [canvasSize]);
 
-  const value = useMemo(() => ({ canvasRef, context }), [canvasRef, context]);
+  const value = useMemo(
+    () => ({ canvasSize, boardPadding, canvasRef, context }),
+    [canvasSize, boardPadding, canvasRef, context],
+  );
 
   return <CanvasContext.Provider value={value}>{children}</CanvasContext.Provider>;
 }
@@ -35,8 +54,8 @@ export function useCanvasContext() {
 }
 
 interface CanvasProps {
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   style?: React.CSSProperties;
   className?: string;
 }

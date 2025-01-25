@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import useCanvas2D from '@/hooks/useCanvas2D';
-import { CANVAS, CONFIG, PIXEL_OFFSET } from '../constants';
+import { useCanvasContext } from '@/app/game/contexts/CanvasContext';
+import { CONFIG, PIXEL_OFFSET } from '../constants';
 import styles from '../styles/Background.module.css';
 import { calculateSizes } from '../utils/BoardUI.utils';
 
 const { COLOR, LINE_WIDTH, BOARD, RATIO } = CONFIG;
 
-/** 점을 그리는 함수 */
+/** 점 그리기 함수 */
 function drawDots(
   context: CanvasRenderingContext2D,
   cellSize: number,
@@ -31,7 +32,7 @@ function drawDots(
   context.closePath();
 }
 
-/** 격자선을 그리는 함수 */
+/** 선 그리기 함수 */
 function drawGrid(
   context: CanvasRenderingContext2D,
   cellSize: number,
@@ -54,25 +55,32 @@ function drawGrid(
 /** 오목판 배경 */
 function BoardBackground() {
   const { context, canvasRef } = useCanvas2D();
+  const { canvasSize, boardPadding } = useCanvasContext();
 
   // 오목판 그리기
   useEffect(() => {
-    if (context) {
-      const { cellSize } = calculateSizes(context.canvas, BOARD.SIZE, BOARD.PADDING, RATIO);
-      context.translate((BOARD.PADDING / 2) * RATIO, (BOARD.PADDING / 2) * RATIO);
+    if (context && canvasRef.current && canvasSize && boardPadding) {
+      const { cellSize } = calculateSizes(
+        canvasRef.current.offsetWidth,
+        BOARD.SIZE,
+        boardPadding,
+        RATIO,
+      );
+
+      context.translate((boardPadding / 2) * RATIO, (boardPadding / 2) * RATIO);
       drawGrid(context, cellSize, BOARD.SIZE, PIXEL_OFFSET);
       drawDots(context, cellSize, BOARD.SIZE, PIXEL_OFFSET);
-      context.translate((-BOARD.PADDING / 2) * RATIO, (BOARD.PADDING / 2) * RATIO);
+      context.translate((-boardPadding / 2) * RATIO, (boardPadding / 2) * RATIO);
     }
-  }, [context]);
+  }, [context, canvasSize, boardPadding, canvasRef]);
 
   return (
     <canvas
       className={styles.background}
       ref={canvasRef}
-      width={CANVAS.WIDTH}
-      height={CANVAS.HEIGHT}
-      style={{ width: CANVAS.WIDTH / RATIO, height: CANVAS.HEIGHT / RATIO }}
+      width={canvasSize}
+      height={canvasSize}
+      style={{ width: canvasSize / RATIO, height: canvasSize / RATIO }}
     />
   );
 }

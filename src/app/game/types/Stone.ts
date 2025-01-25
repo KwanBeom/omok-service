@@ -1,5 +1,5 @@
+import { BLACK, WHITE } from '../constants/Player';
+
 export type PlayerColor = 'black' | 'white';
-export type EMPTY = 0;
-export type BLACK = 1;
-export type WHITE = 2;
-export type STONE = BLACK | WHITE;
+export type STONE = typeof BLACK | typeof WHITE;
+export type PLAYER = typeof BLACK | typeof WHITE;
