@@ -1,7 +1,7 @@
-import Board from '@/app/_omok/core/Board';
-import Direction from '@/app/_omok/entities/Direction';
-import Position from '@/app/_omok/entities/Position';
-import { StoneColor } from '@/app/_omok/entities/Stone';
+import Board from '../../server/omok/core/Board';
+import Direction from '../../server/omok/entities/Direction';
+import Position from '../../server/omok/entities/Position';
+import { StoneColor } from '../../server/omok/entities/Stone';
 
 describe('Board Class Tests', () => {
   let board: Board;

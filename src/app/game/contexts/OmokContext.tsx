@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
-import { Sequence } from '@/hooks/useSequence';
+import { Sequence } from '@/src/hooks/useSequence';
 import { PLAYER } from '../types/Stone';
 import { Geumsu } from '../types/Geumsu';
 

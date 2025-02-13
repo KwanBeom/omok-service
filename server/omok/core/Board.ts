@@ -31,6 +31,11 @@ class Board {
     return this.board[x][y];
   }
 
+  /** board의 상태 반환 */
+  getBoard() {
+    return this.board;
+  }
+
   /** 놓여진 돌 갯수 반환 */
   getStoneCount() {
     return this.stoneCount;

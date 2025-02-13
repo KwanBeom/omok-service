@@ -1,6 +1,6 @@
-import Position from '@/app/_omok/entities/Position';
-import SamsamRule from '@/app/_omok/core/RenjuRule/SamsamRule';
-import Board from '@/app/_omok/core/Board';
+import Position from '../../../server/omok/entities/Position';
+import SamsamRule from '../../../server/omok/core/RenjuRule/SamsamRule';
+import Board from '../../../server/omok/core/Board';
 import { dropStoneToBoard, extractPositions } from '../../utils/utils';
 
 describe('3*3 금수 테스트', () => {

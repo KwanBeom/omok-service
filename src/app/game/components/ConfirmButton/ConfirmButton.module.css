@@ -1,8 +1,16 @@
 .button {
+  width: 100%;
+  font-size: 1.8rem;
   border-radius: 1rem;
   padding: 2rem;
   border: none;
   cursor: pointer;
-  background-color: black;
+  background-color: var(--main-color);
   color: white;
+  font-weight: 700;
+}
+
+.button:disabled {
+  background: var(--button-disabled-bg);
+  color: var(--button-disabled-font);
 }

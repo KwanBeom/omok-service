@@ -12,10 +12,23 @@ class Omok {
 
   private historyManager = new HistoryManager();
 
+  getGeumsu() {
+    return this.judge.getGeumsuPositions();
+  }
+
+  getCurrentTurn() {
+    return this.judge.getCurrentTurn();
+  }
+
+  getBoard() {
+    return this.board.getBoard();
+  }
+
   play(x: number, y: number) {
-    const stone = new Stone(this.judge.getCurrentStoneColor(), x, y);
+    const currentTurnColor = Stone.pointToColor(this.judge.getCurrentTurn());
+    const stone = new Stone(currentTurnColor, x, y);
     const position = new Position(x, y);
-    this.board.dropStone(position, this.judge.getCurrentStoneColor());
+    this.board.dropStone(position, currentTurnColor);
     this.judge.applyRule(this.board, position);
     this.historyManager.addMove(stone);
   }
@@ -34,12 +47,8 @@ class Omok {
     return this.judge.checkWin(this.board, lastMove);
   }
 
-  getGeumsu() {
-    return this.judge.getGeumsuPositions();
-  }
-
-  getCurrentTurn() {
-    return this.judge.getCurrentStoneColor();
+  isValidTurn(turn: Stone['point']) {
+    return this.judge.getCurrentTurn() === turn;
   }
 }
 

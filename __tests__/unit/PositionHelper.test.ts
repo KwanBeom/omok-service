@@ -1,6 +1,6 @@
-import Direction from '@/app/_omok/entities/Direction';
-import Position, { IPosition } from '@/app/_omok/entities/Position';
-import PositionHelper from '@/app/_omok/entities/PositionHelper';
+import Direction from '../../server/omok/entities/Direction';
+import Position, { IPosition } from '../../server/omok/entities/Position';
+import PositionHelper from '../../server/omok/entities/PositionHelper';
 
 describe('positions test', () => {
   let positions: IPosition[] = [];

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Position } from '@/app/game/types/Position';
-import { isSamePosition } from '@/app/_omok/entities/Position';
+import { Position } from '@/src/app/game/types/Position';
+import { isSamePosition } from '@/server/omok/entities/Position';
 import { useCanvasContext } from '../../../contexts/CanvasContext';
 import { CONFIG } from '../constants';
 import { calculateSizes, isValidPosition } from '../utils/BoardUI.utils';

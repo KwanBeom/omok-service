@@ -1,4 +1,4 @@
-import { Position } from '@/app/game/types/Position';
+import { Position } from '@/src/app/game/types/Position';
 
 export const positionToString = (position: Position) => `${position.x}.${position.y}`;
 

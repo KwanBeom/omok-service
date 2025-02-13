@@ -1,8 +1,8 @@
-import Board from '@/app/_omok/core/Board';
-import Omok from '@/app/_omok/core/Omok';
-import { RenjuRule } from '@/app/_omok/core/RenjuRule';
-import SamsamRule from '@/app/_omok/core/RenjuRule/SamsamRule';
-import Position, { IPosition } from '@/app/_omok/entities/Position';
+import Board from '../../server/omok/core/Board';
+import Omok from '../../server/omok/core/Omok';
+import { RenjuRule } from '../../server/omok/core/RenjuRule';
+import SamsamRule from '../../server/omok/core/RenjuRule/SamsamRule';
+import Position, { IPosition } from '../../server/omok/entities/Position';
 
 export function playStones(omok: Omok, positions: Position[]) {
   for (let i = 0; i < positions.length; i += 1) {

@@ -2,7 +2,7 @@ import Board from './Board';
 import { IPosition } from '../entities/Position';
 import { RenjuGeumsu, RenjuRule } from './RenjuRule';
 import Direction from '../entities/Direction';
-import { StoneColor } from '../entities/Stone';
+import Stone from '../entities/Stone';
 
 /** 오목 심판 클래스 */
 class OmokJudge {
@@ -16,15 +16,20 @@ class OmokJudge {
     this.rule = rule;
   }
 
-  /** 룰 적용 */
-  applyRule(board: Board, position: IPosition) {
-    this.board = board;
-    this.geumsu = this.rule.apply(board, position);
+  /** 현재 턴에 착수해야 할 돌 반환 */
+  getCurrentTurn(): Stone['point'] {
+    return this.board.getStoneCount() % 2 === 0 ? Stone.point.black : Stone.point.white;
   }
 
   /** 금수 위치 반환 */
   getGeumsuPositions(): RenjuGeumsu {
     return this.geumsu;
+  }
+
+  /** 룰 적용 */
+  applyRule(board: Board, position: IPosition) {
+    this.board = board;
+    this.geumsu = this.rule.apply(board, position);
   }
 
   /** 승리 여부 확인 */
@@ -45,11 +50,6 @@ class OmokJudge {
     }
 
     return false;
-  }
-
-  /** 현재 턴에 착수해야 할 돌의 색을 반환 */
-  getCurrentStoneColor(): StoneColor {
-    return this.board.getStoneCount() % 2 === 0 ? 'black' : 'white';
   }
 }
 

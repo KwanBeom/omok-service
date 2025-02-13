@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export type Sequence = { position: { x: number; y: number }; color: 1 | 2 };
 /**
@@ -8,13 +8,17 @@ export type Sequence = { position: { x: number; y: number }; color: 1 | 2 };
 const useSequence = (): {
   sequence: Sequence[];
   update: (x: number, y: number, color: 1 | 2) => void;
+  reset: () => void;
 } => {
   const [sequence, setSequence] = useState<Sequence[]>([]);
-  const update = (x: number, y: number, color: 1 | 2) => {
+  const update = useCallback((x: number, y: number, color: 1 | 2) => {
     setSequence((prev) => [...prev, { position: { x, y }, color }]);
-  };
+  }, []);
+  const reset = useCallback(() => {
+    setSequence([]);
+  }, []);
 
-  return { sequence, update };
+  return { sequence, update, reset };
 };
 
 export default useSequence;

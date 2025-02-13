@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.ts",
+    "dev": "nodemon server/index.ts",
     "build": "next build",
     "start": "NODE_ENV=production ts-node server.ts",
     "lint": "next lint",

@@ -1,6 +1,6 @@
-import Position from '@/app/_omok/entities/Position';
-import { RenjuRule } from '@/app/_omok/core/RenjuRule';
-import Board from '@/app/_omok/core/Board';
+import Position from '../../../server/omok/entities/Position';
+import { RenjuRule } from '../../../server/omok/core/RenjuRule';
+import Board from '../../../server/omok/core/Board';
 import { dropStoneToBoardAndApplyRenjuRule } from '../../utils/utils';
 
 describe('거짓 금수 테스트', () => {

@@ -1,6 +1,6 @@
-import Position from '@/app/_omok/entities/Position';
-import SasaRule from '@/app/_omok/core/RenjuRule/SasaRule';
-import Board from '@/app/_omok/core/Board';
+import Position from '../../../server/omok/entities/Position';
+import SasaRule from '../../../server/omok/core/RenjuRule/SasaRule';
+import Board from '../../../server/omok/core/Board';
 import { dropStoneToBoard, extractPositions } from '../../utils/utils';
 
 describe('44 금수 test', () => {

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import Position from '@/app/_omok/entities/Position';
-import { BLACK, WHITE } from '@/app/game/constants/Player';
-import { Geumsu } from '@/app/game/types/Geumsu';
-import { useOmokContext } from '@/app/game/contexts/OmokContext';
+import Position from '@/server/omok/entities/Position';
+import { BLACK, WHITE } from '@/src/app/game/constants/Player';
+import { Geumsu } from '@/src/app/game/types/Geumsu';
+import { useOmokContext } from '@/src/app/game/contexts/OmokContext';
 import { useCanvasContext } from '../../../contexts/CanvasContext';
 import { CONFIG, PIXEL_OFFSET } from '../constants';
 import { calculateSizes } from '../utils/BoardUI.utils';

@@ -1,4 +1,4 @@
-import { Position } from '@/app/game/types/Position';
+import { Position } from '@/src/app/game/types/Position';
 
 /** arc 내부에 X 그리기 */
 export const drawXInArc = (
@@ -35,3 +35,5 @@ export const getBoardCoordinate = (
   x: cellSize * position.y + boardPadding,
   y: cellSize * position.x + boardPadding,
 });
+
+/* 오목판 줄 긋기 */

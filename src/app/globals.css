@@ -1,35 +1,8 @@
-:root {
-  /* font sizes */
-  --font-Xs-size: 1.2rem;
-  --font-Sm-size: 1.4rem;
-  --font-Md-size: 1.6rem;
-  --font-Lg-size: 1.8rem;
-  --font-Xl-size: 3rem;
-  --font-2xl-size: 4rem;
-
-  --board-color: #caab93;
-
-  /* devices */
-  --sm-mobile: 480px;
-  --mobile: 768px;
-  --tablet: 1024px;
-  --desktop: 1280px;
-  --lg-desktop: 1920px;
-}
-
-html {
-  font-size: 10px !important;
-  overflow-x: hidden;
-}
-
-body {
-  width: min(100%, 500px);
-  margin: 0 auto;
-  padding: 20px 0;
-  position: relative;
-}
-
 /* reset css */
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
 html,
 body,
 div,
@@ -154,10 +127,39 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+/* reset css end */
+
+:root {
+  /* font sizes */
+  --font-Xs-size: 1.2rem;
+  --font-Sm-size: 1.4rem;
+  --font-Md-size: 1.6rem;
+  --font-Lg-size: 1.8rem;
+  --font-Xl-size: 3rem;
+  --font-2xl-size: 4rem;
+
+  --board-color: #caab93;
+
+  /* devices */
+  --sm-mobile: 480px;
+  --mobile: 768px;
+  --tablet: 1024px;
+  --desktop: 1280px;
+  --lg-desktop: 1920px;
+}
 
 html {
-  font-size: 10px;
+  font-size: 10px !important;
+  overflow-x: hidden;
+}
+
+body {
+  width: min(100%, 500px);
+  margin: 0 auto;
 }
 
 :root {
+  --main-color: #2e90fa;
+  --button-disabled-bg: #e4e7ec;
+  --button-disabled-font: #667085;
 }

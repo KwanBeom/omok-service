@@ -1,5 +1,5 @@
-import Omok from '@/app/_omok/core/Omok';
-import Position from '@/app/_omok/entities/Position';
+import Omok from '../../server/omok/core/Omok';
+import Position from '../../server/omok/entities/Position';
 import { playStones } from '../utils/utils';
 
 describe('omok tests', () => {

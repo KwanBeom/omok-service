@@ -1,6 +1,6 @@
-import OmokAnalyzer from '@/app/_omok/core/OmokAnalyzer';
-import Position, { IPositionTuple, PositionTuple } from '@/app/_omok/entities/Position';
-import Board from '@/app/_omok/core/Board';
+import OmokAnalyzer from '../../server/omok/core/OmokAnalyzer';
+import Position, { IPositionTuple, PositionTuple } from '../../server/omok/entities/Position';
+import Board from '../../server/omok/core/Board';
 
 describe('OmokAnalyzer tests', () => {
   let board: Board;

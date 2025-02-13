@@ -1,6 +1,6 @@
-import Position from '@/app/_omok/entities/Position';
-import JangmokRule from '@/app/_omok/core/RenjuRule/JangmokRule';
-import Board from '@/app/_omok/core/Board';
+import Position from '../../../server/omok/entities/Position';
+import JangmokRule from '../../../server/omok/core/RenjuRule/JangmokRule';
+import Board from '../../../server/omok/core/Board';
 import { dropStoneToBoard } from '../../utils/utils';
 
 describe('장목 금수 test', () => {

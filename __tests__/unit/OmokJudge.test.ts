@@ -1,8 +1,8 @@
-import Omok from '@/app/_omok/core/Omok';
-import Position from '@/app/_omok/entities/Position';
-import OmokJudge from '@/app/_omok/core/OmokJudge';
-import { RenjuRule } from '@/app/_omok/core/RenjuRule';
-import Board from '@/app/_omok/core/Board';
+import Omok from '../../server/omok/core/Omok';
+import Position from '../../server/omok/entities/Position';
+import OmokJudge from '../../server/omok/core/OmokJudge';
+import { RenjuRule } from '../../server/omok/core/RenjuRule';
+import Board from '../../server/omok/core/Board';
 
 describe('오목 돌 5개 이어 승리하는 테스트 케이스', () => {
   const rule = new RenjuRule();

@@ -29,6 +29,7 @@ function BoardUI({ onClick }: { onClick?: (position: Position) => void }) {
   }, [canvas, boardPadding, canvasSize]);
 
   useEffect(() => {
+    // 캔버스 클릭시 선택 포지션 업데이트
     const handleCanvasClick = (e: MouseEvent) => {
       if (!canvas || cellSizeState === 0) return;
 
@@ -54,7 +55,7 @@ function BoardUI({ onClick }: { onClick?: (position: Position) => void }) {
   }, [selectedPosition, onClick]);
 
   return (
-    <>
+    <div className={styles.boardWrapper}>
       <Canvas
         className={styles.board}
         width={canvasSize}
@@ -65,7 +66,7 @@ function BoardUI({ onClick }: { onClick?: (position: Position) => void }) {
       <Stones stones={sequence} />
       {user === 1 && <GeumsuOverlay geumsu={geumsu} />}
       <PositionHighlight position={selectedPosition} />
-    </>
+    </div>
   );
 }
 

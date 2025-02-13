@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { Position } from '@/app/game/types/Position';
-import { STONE } from '@/app/game/types/Stone';
+import { Position } from '@/src/app/game/types/Position';
+import { STONE } from '@/src/app/game/types/Stone';
 import { CONFIG } from '../constants';
 import { useCanvasContext } from '../../../contexts/CanvasContext';
 import { calculateSizes } from '../utils/BoardUI.utils';
@@ -15,8 +15,14 @@ function Stones({ stones }: { stones: Stone[] }) {
   const { context, boardPadding } = useCanvasContext();
 
   useEffect(() => {
-    if (!context) return;
+    const reset = () => {
+      context?.clearRect(0, 0, context?.canvas.width, context?.canvas.height);
+    };
+    if (stones.length === 0) reset();
+  }, [stones, context]);
 
+  useEffect(() => {
+    if (!context) return;
     const { cellSize, stoneSize } = calculateSizes(
       context.canvas.offsetWidth,
       BOARD.SIZE,
