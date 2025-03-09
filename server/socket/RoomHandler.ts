@@ -85,19 +85,27 @@ class RoomHandler {
   /* 방에서 퇴장 */
   leaveRoom(socket: Socket) {
     const roomId = this.roomIdMap.get(socket.id);
-    if (roomId) {
-      const room = this.roomsMap.get(roomId);
-      const players = room?.players;
-      const index = players?.indexOf(socket);
-      if (index !== undefined && index !== -1) {
-        players?.splice(index, 1);
-        this.broadcast(socket, EVENT_KEYS.ROOM_INFO, {
-          userCount: players?.length || 0,
-          roomId,
-        });
-        this.roomIdMap.delete(socket.id);
+    if (!roomId) return false;
+
+    const room = this.roomsMap.get(roomId);
+    // 방 정보가 존재하지 않으면 퇴장 실패
+    if (room === undefined) return false;
+    const { players } = room;
+    const playerIndex = players.indexOf(socket);
+    if (playerIndex !== undefined && playerIndex !== -1) {
+      players.splice(playerIndex, 1); // 플레이어 제거
+      // 클라이언트에게 방 정보 갱신
+      this.broadcast(socket, EVENT_KEYS.ROOM_INFO, {
+        userCount: players.length,
+        roomId,
+      });
+      if (players.length === 0) {
+        this.deleteRoom(roomId);
       }
+      console.log('방에 입장한 플레이어 수', players.length);
     }
+    // 퇴장 성공
+    return true;
   }
 
   /** socket이 접속해있는 방의 모든 클라이언트에게 이벤트를 발생시키는 브로드캐스팅 메서드 */
@@ -106,6 +114,11 @@ class RoomHandler {
     if (roomId) {
       this.io.to(roomId).emit(key, data);
     }
+  }
+
+  private deleteRoom(roomId: string) {
+    this.roomIdMap.delete(roomId);
+    this.roomsMap.delete(roomId);
   }
 }
 

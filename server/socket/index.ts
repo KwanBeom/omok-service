@@ -62,7 +62,10 @@ const setupSocketHandlers = (io: Server) => {
     });
 
     // 방 퇴장 요청 받는 이벤트 리스너
-    socket.on(EVENT_KEYS.LEAVE_ROOM, socket.disconnect);
+    socket.on(EVENT_KEYS.LEAVE_ROOM, () => {
+      roomHandler.leaveRoom(socket);
+      socket.disconnect();
+    });
 
     // 게임 이벤트 받아 게임 핸들러에게 전달
     socket.on(EVENT_KEYS.CLIENT_PLAY, (data: ClientPlayEvent['clientSend']) => {
