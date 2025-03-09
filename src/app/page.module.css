@@ -1,2 +1,83 @@
-.boardWrapper {
+/* 페이지 래퍼 */
+.wrapper {
+  background-color: #47331d;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10rem;
+}
+
+/* 오목 아이콘 및 텍스트 */
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+.title-kor {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--point-color);
+}
+
+.title-eng {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: repeat(3, 10px);
+  grid-gap: 6px;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--point-color);
+  border-radius: 50%;
+}
+
+.main {
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* 방 생성 및 입장 버튼  */
+.main button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: 0;
+  color: #fff;
+  padding: 1rem 0;
+  font-weight: 700;
+  border-radius: var(--sm-radius);
+  vertical-align: middle;
+}
+
+.main button .button-text {
+  vertical-align: middle;
+}
+
+.button-create-room {
+  background-color: var(--main-color);
+}
+
+.button-join-room {
+  background-color: #50c879;
 }

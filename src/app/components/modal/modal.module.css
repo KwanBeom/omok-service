@@ -1,11 +1,25 @@
+/* modal title */
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* modal content */
+.content {
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--grey-color-600);
+}
+
 .modal {
-  width: 80%;
+  width: min(70%, 30rem);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  height: 30rem;
-  border-radius: 2rem;
+  border-radius: var(--md-radius);
   border: 1px solid #000;
   padding: 1.5rem;
   z-index: 2;
@@ -14,25 +28,43 @@
 
 .input {
   width: 100%;
+  font-size: 1.6rem;
+  border: 1px solid var(--button-disabled-bg);
+  padding: 0.5rem;
+  box-sizing: border-box;
+  border-radius: var(--sm-radius);
+  margin: 2rem 0;
 }
 
-.title {
-  font-size: 2rem;
-  text-align: center;
-  margin-bottom: 1rem;
+.input:focus {
+  outline: none;
+  border-color: var(--main-color);
 }
 
-.content {
-  text-align: center;
-  font-size: 1.4rem;
-}
-
-.buttonGroup {
+.buttonGroup { 
   display: flex;
+  gap: 0.5rem;
 }
 
 .buttonGroup button {
+  cursor: pointer;
   flex-grow: 1;
+  padding: 1rem 2rem;
+  border-radius: var(--sm-radius);
+}
+
+.buttonGroup button:hover {
+  filter: brightness(90%);
+}
+
+.confirm-button {
+  background-color: var(--main-color);
+  color: #fff;
+}
+
+.cancel-button {
+  background-color: var(--button-disabled-bg);
+  color: var(--button-disabled-font);
 }
 
 .backdrop {

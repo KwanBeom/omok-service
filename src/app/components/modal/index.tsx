@@ -1,8 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import styles from './modal.module.css';
-import { useState } from 'react';
 
 type ModalProps = {
   isOpen?: boolean;
+  toggleOpen?: () => void;
   title?: string;
   content?: string;
   placeholder?: string;
@@ -10,8 +11,32 @@ type ModalProps = {
   onCancel?: () => void;
 };
 
-const Modal = ({ title, isOpen, placeholder, content, onSubmit, onCancel }: ModalProps) => {
+function Modal({
+  title,
+  isOpen,
+  toggleOpen,
+  placeholder,
+  content,
+  onSubmit,
+  onCancel,
+}: ModalProps) {
   const [value, setValue] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const keydownClose = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && toggleOpen) toggleOpen();
+    };
+    window.addEventListener('keydown', keydownClose);
+    return () => window.removeEventListener('keydown', keydownClose);
+  }, [toggleOpen]);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [inputRef]);
+
   return (
     isOpen && (
       <>
@@ -20,13 +45,18 @@ const Modal = ({ title, isOpen, placeholder, content, onSubmit, onCancel }: Moda
           <p className={styles.content}>{content}</p>
           <input
             type="text"
+            ref={inputRef}
             className={styles.input}
             placeholder={placeholder}
             onChange={(e) => setValue(e.target.value)}
           />
           <div className={styles.buttonGroup}>
+            <button type="button" className={styles['cancel-button']} onClick={onCancel}>
+              취소
+            </button>
             <button
               type="button"
+              className={styles['confirm-button']}
               onClick={() => {
                 if (onSubmit) {
                   onSubmit(value);
@@ -35,15 +65,18 @@ const Modal = ({ title, isOpen, placeholder, content, onSubmit, onCancel }: Moda
             >
               확인
             </button>
-            <button type="button" onClick={onCancel}>
-              취소
-            </button>
           </div>
         </div>
-        <div className={styles.backdrop} />
+        <div
+          className={styles.backdrop}
+          role="button"
+          tabIndex={0}
+          onMouseDown={toggleOpen}
+          aria-label="close modal"
+        />
       </>
     )
   );
-};
+}
 
 export default Modal;

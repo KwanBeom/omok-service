@@ -83,7 +83,9 @@ summary,
 time,
 mark,
 audio,
-video {
+video,
+button,
+input {
   margin: 0;
   padding: 0;
   border: 0;
@@ -91,6 +93,7 @@ video {
   font: inherit;
   vertical-align: baseline;
 }
+
 /* HTML5 display-role reset for older browsers */
 article,
 aside,
@@ -138,14 +141,26 @@ table {
   --font-Xl-size: 3rem;
   --font-2xl-size: 4rem;
 
-  --board-color: #caab93;
-
   /* devices */
   --sm-mobile: 480px;
   --mobile: 768px;
   --tablet: 1024px;
   --desktop: 1280px;
   --lg-desktop: 1920px;
+
+  /* colors */
+  --board-color: #caab93;
+  --main-color: #2e90fa;
+  --grey-color-400: #afb8c1;
+  --grey-color-600: #616871;
+  --button-disabled-bg: #e4e7ec;
+  --button-disabled-font: #667085;
+  --point-color: #ffc107;
+
+  /* styles */
+  --sm-radius: 5px;
+  --md-radius: 10px;
+  --lg-radius: 20px;
 }
 
 html {
@@ -156,10 +171,4 @@ html {
 body {
   width: min(100%, 500px);
   margin: 0 auto;
-}
-
-:root {
-  --main-color: #2e90fa;
-  --button-disabled-bg: #e4e7ec;
-  --button-disabled-font: #667085;
 }
