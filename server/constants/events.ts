@@ -18,6 +18,7 @@ export const EVENT_KEYS = {
   ROOM_INFO: 'ROOM_INFO',
   FULL_ROOM: 'FULL_ROOM',
   // 게임 진행 관련
+  READY: 'READY',
   CLIENT_PLAY: 'CLIENT_PLAY',
   SERVER_PLAY: 'SERVER_PLAY',
   ASSIGN_STONE_COLOR: 'ASSIGN_STONE_COLOR',
@@ -41,16 +42,18 @@ export type TEventKeys = typeof EVENT_KEYS;
 // ------------------ socket 연결 종료 관련 이벤트 데이터 타입 -------------------------
 export type SocketConnectEvent = EventTemplate<TEventKeys['CONNECT_SOCKET'], never, never>;
 export type SocketDisconnectEvent = EventTemplate<TEventKeys['DISCONNECT_SOCKET'], never, never>;
-
 // ----------------- 게임 시작/종료 관련 이벤트 데이터 타입 -------------------
-export type GameStartEvent = EventTemplate<TEventKeys['GAME_START'], { roomId: string }, never>;
+export type GameStartEvent = EventTemplate<
+  TEventKeys['GAME_START'],
+  { color: Stone['point'] },
+  never
+>;
 export type GameResetEvent = EventTemplate<TEventKeys['GAME_RESET'], { message?: string }, never>;
 export type GameOverEvent = EventTemplate<
   TEventKeys['GAME_OVER'],
   { winner: Stone['point'] },
   never
 >;
-
 // ------------------- 방 관련 이벤트 이벤트 데이터 타입 -----------------------
 export type CreateRoomEvent = EventTemplate<
   TEventKeys['CREATE_ROOM'],
@@ -68,7 +71,6 @@ export type JoinRoomEvent = EventTemplate<
   { roomId: string }
 >;
 export type LeaveRoomEvent = EventTemplate<TEventKeys['LEAVE_ROOM'], never, { roomId: string }>;
-
 // -------------------- 게임 진행 관련 이벤트 데이터 타입 -----------------------
 export type ClientPlayEvent = EventTemplate<
   TEventKeys['CLIENT_PLAY'],
@@ -88,12 +90,7 @@ export type ServerPlayEvent = EventTemplate<
   },
   never
 >;
-export type AssignStoneColorEvent = EventTemplate<
-  TEventKeys['ASSIGN_STONE_COLOR'],
-  { color: Stone['point'] },
-  never
->;
-
+export type ReadyEvent = EventTemplate<TEventKeys['READY'], never, { ready: boolean }>;
 // ------------------- 에러 관련 이벤트 데이터 타입 --------------------
 export type ErrorEvent = EventTemplate<
   TEventKeys['ERROR'],
