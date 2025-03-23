@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import useCanvas2D from '@/src/hooks/useCanvas2D';
 import { useCanvasContext } from '@/src/app/game/contexts/CanvasContext';
 import { CONFIG, PIXEL_OFFSET } from '../constants';
-import styles from '../styles/BoardUI.module.css';
 import { calculateSizes } from '../utils/BoardUI.utils';
+import styles from '../BoardUI.module.css';
 
 const { COLOR, LINE_WIDTH, BOARD, RATIO } = CONFIG;
 

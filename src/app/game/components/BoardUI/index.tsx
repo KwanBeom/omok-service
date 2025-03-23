@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Canvas, useCanvasContext } from '../../contexts/CanvasContext';
-import styles from './styles/BoardUI.module.css';
 import { CONFIG } from './constants';
 import { Position } from '../../types/Position';
 import Stones from './subcomponents/Stones';
@@ -9,6 +8,7 @@ import BoardBackground from './subcomponents/Background';
 import PositionHighlight from './subcomponents/PositionHighlight';
 import { calculateSizes, isValidPosition } from './utils/BoardUI.utils';
 import { useOmokContext } from '../../contexts/OmokContext';
+import styles from './BoardUI.module.css';
 
 const { BOARD, RATIO } = CONFIG;
 
