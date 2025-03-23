@@ -17,6 +17,8 @@ app.prepare().then(() => {
       origin: '*',
       methods: ['GET', 'POST'],
     },
+    pingInterval: 10000, // 25초마다 핑 요청
+    pingTimeout: 5000, // 5초 동안 응답 없으면 연결 종료
   });
 
   setupSocketHandlers(io);
