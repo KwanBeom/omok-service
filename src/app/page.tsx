@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from './components/Modal';
-import { CRETAE_ROOM, JOIN_ROOM } from './lib/types/room';
+import { CreateRoom, JoinRoom } from './lib/types/room';
 import { ROOM_ID, ROOM_MODE } from './lib/constants/room';
 import ROUTES from './lib/routes';
 import styles from './page.module.css';
 
 export default function Home() {
   // 입장 모드 [1]: 생성, [2]: 입장
-  const [roomMode, setRoomMode] = useState<CRETAE_ROOM | JOIN_ROOM>(ROOM_MODE.CREATE);
+  const [roomMode, setRoomMode] = useState<CreateRoom | JoinRoom>(ROOM_MODE.CREATE);
   const [modalOpen, setModalOpen] = useState(false);
   const router = useRouter();
   const toggleModal = () => setModalOpen(!modalOpen);
