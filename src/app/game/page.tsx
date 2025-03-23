@@ -5,13 +5,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useSequence from '@/src/hooks/useSequence';
 import {
-  AssignStoneColorEvent,
   RoomInfoEvent,
   EVENT_KEYS,
   ServerPlayEvent,
   ClientPlayEvent,
   ErrorEvent,
+  GameStartEvent,
+  GameOverEvent,
 } from '@/server/constants/events';
+import useTimer from '@/src/hooks/useTimer';
+import useTurn from '@/src/hooks/useTurn';
+import useEffectOnce from '@/src/hooks/useEffectOnce';
 import { RenjuGeumsu } from '@/server/omok/core/RenjuRule';
 import { Position } from './types/Position';
 import { STONE } from './types/Stone';
@@ -22,10 +26,13 @@ import { isPositionIncluded } from './components/BoardUI/helpers/positionHelper'
 import { OmokProvider } from './contexts/OmokContext';
 import { CANVAS, CONFIG } from './components/BoardUI/constants';
 import { Geumsu } from './types/Geumsu';
-import styles from './page.module.css';
 import { BLACK } from './constants/Player';
 import { createRoom, joinRoom, leaveRoom } from './sockets/roomSocket';
 import { ROOM_MODE } from '../lib/constants/room';
+import GameInfoHeader from './components/GameInfoHeader';
+import ProgressBar from './components/TimeProgressBar';
+import { TURN_TIME } from './constants/Time';
+import ShadowBox from '../components/ShadowBox';
 
 type RoomInfo = { id: string; count: number };
 
@@ -47,14 +54,13 @@ const formatGeumsuData = (geumsuData: RenjuGeumsu): Geumsu[] =>
 /** 방 생성/입장 처리 */
 const connectToRoom = async (create: boolean, roomId: string) => {
   socket.connect();
-
+  // 방 생성인 경우
   if (create) {
     const { success, message } = await createRoom(roomId);
     if (!success) {
       throw new Error(message);
     }
   }
-
   const { success, message } = await joinRoom(roomId);
   if (!success) {
     throw new Error(message);
@@ -63,9 +69,12 @@ const connectToRoom = async (create: boolean, roomId: string) => {
   return true;
 };
 
+// TODO: 접속 끊김 처리에 대해서 어떻게 처리할지에 대해서 고민해보아야 할 듯 하다.
+
 export default function Page() {
+  const [ready, setReady] = useState(false);
   const [myColor, setMyColor] = useState<STONE>(1); // 현재 플레이어가 흑돌/백돌인지에 대한 상태
-  const [turn, setTurn] = useState<STONE>(1); // 현재 착수해야 하는 플레이어가 누구인지, 1 - 흑, 2 - 백
+  const { turn, setTurn, changeTurn } = useTurn(); // 현재 턴 상태
   const { sequence, update: updateSequence, reset: resetSequence } = useSequence(); // 오목돌 놓아진 순서 관리
   const [geumsu, setGeumsu] = useState<Geumsu[]>([]); // 금수 데이터 상태
   const [selectedPosition, setSelectedPosition] = useState<Position | undefined>(); // 선택된 포지션 상태
@@ -78,35 +87,7 @@ export default function Page() {
   const id = searchParams.get('id');
   const mode = searchParams.get('mode');
   const router = useRouter();
-
-  /* 초기 설정 셋팅 */
-  const init = useCallback(() => {
-    // 기본 캔버스 사이즈 초기화
-    const scaledWidth = window.innerWidth * CONFIG.RATIO;
-    setInitialCanvasSize(scaledWidth < CANVAS.WIDTH ? scaledWidth : CANVAS.WIDTH);
-  }, []);
-
-  // 초기 설정 함수 실행
-  useEffect(init, [init]);
-
-  // 방 입장 및 퇴장처리
-  useEffect(() => {
-    connectToRoom(Number(mode) === ROOM_MODE.CREATE, id!).catch((e) => {
-      if (e instanceof Error) {
-        alert(e.message);
-        router.back();
-      }
-    });
-
-    return () => leaveRoom(id!);
-  }, [id, mode, router]);
-
-  // 오목 돌 두고 관련 상태 업데이트
-  const placeStone = (position: Position) => {
-    const playData: ClientPlayEvent['clientSend'] = { position, userColor: myColor };
-    // 클라이언트가 둔 데이터를 서버에 보냄
-    socket.emit(EVENT_KEYS.CLIENT_PLAY, playData);
-  };
+  const { time, toggle: toggleTimer, reset: resetTimer } = useTimer(TURN_TIME);
 
   // 게임 리셋
   const resetGame = useCallback(() => {
@@ -115,59 +96,17 @@ export default function Page() {
     resetSequence();
     setTurn(BLACK);
     socket.emit(EVENT_KEYS.GAME_RESET);
-  }, [resetSequence]);
-
-  useEffect(() => {
-    // 방 정보 상태 업데이트
-    socket.on(EVENT_KEYS.ROOM_INFO, (data: RoomInfoEvent['serverSend']) => {
-      setRoomInfo({ id: data.roomId, count: data.userCount });
-    });
-
-    // 게임 시작시 돌 색깔 할당 이벤트 감지하고 상태 업데이트
-    socket.on(EVENT_KEYS.ASSIGN_STONE_COLOR, ({ color }: AssignStoneColorEvent['serverSend']) => {
-      setIsPlaying(true);
-      setMyColor(color);
-    });
-
-    // 오목 진행 이후 업데이트 된 관련 상태 전달받음
-    socket.on(EVENT_KEYS.SERVER_PLAY, (data: ServerPlayEvent['serverSend']) => {
-      setGeumsu(formatGeumsuData(data.geumsu)); // 금수 설정
-      updateSequence(data.position.x, data.position.y, data.stoneColor); // 돌 놓은 순서 업데이트
-      setTurn(data.turn);
-    });
-
-    // game over event
-    socket.on(EVENT_KEYS.GAME_OVER, () => {
-      alert(`${turn === 1 ? 'black' : 'white'} is Win, 게임을 초기화합니다.`);
-      setIsPlaying(false);
-      resetGame();
-    });
-
-    socket.on(EVENT_KEYS.ERROR, ({ message }: ErrorEvent['serverSend']) => {
-      alert(message || '에러가 발생했습니다.');
-    });
-
-    return () => {
-      socket.off(EVENT_KEYS.ASSIGN_STONE_COLOR);
-      socket.off(EVENT_KEYS.ROOM_INFO);
-      socket.off(EVENT_KEYS.SERVER_PLAY);
-      socket.off(EVENT_KEYS.GAME_OVER);
-      socket.off(EVENT_KEYS.GAME_RESET);
-      socket.disconnect();
-    };
+    resetTimer();
+    setReady(false);
+    setIsPlaying(false);
   }, []);
 
-  useEffect(() => {
-    if (isPlaying) resetGame();
-  }, [isPlaying, resetGame]);
-
-  // 한 수 되돌리기
-  // const undoLastMove = () => {
-  //   omok.undo();
-  //   setStones((prevStones) => prevStones.slice(0, -1)); // 마지막 돌 제거
-  //   setGeumsu(formatGeumsuData(omok.getGeumsu())); // 금수 정보 업데이트
-  //   toggleTurn();
-  // };
+  // 오목 돌 두고 관련 상태 업데이트
+  const placeStone = (position: Position) => {
+    const playData: ClientPlayEvent['clientSend'] = { position, userColor: myColor };
+    // 클라이언트가 둔 데이터를 서버에 보냄
+    socket.emit(EVENT_KEYS.CLIENT_PLAY, playData);
+  };
 
   // 착수 버튼 이벤트 함수
   const handleConfirm = () => {
@@ -191,19 +130,120 @@ export default function Page() {
     setSelectedPosition(undefined);
   };
 
+  // 서버 이벤트 등록
+  useEffect(() => {
+    // 방 정보 상태 업데이트
+    socket.on(EVENT_KEYS.ROOM_INFO, (data: RoomInfoEvent['serverSend']) => {
+      setRoomInfo({ id: data.roomId, count: data.userCount });
+    });
+
+    // 게임 시작시 상태 업데이트
+    socket.on(EVENT_KEYS.GAME_START, ({ color }: GameStartEvent['serverSend']) => {
+      setIsPlaying(true);
+      setMyColor(color);
+    });
+
+    // 오목 진행 이후 업데이트 된 관련 상태 전달받음
+    socket.on(EVENT_KEYS.SERVER_PLAY, (data: ServerPlayEvent['serverSend']) => {
+      setGeumsu(formatGeumsuData(data.geumsu)); // 금수 설정
+      updateSequence(data.position.x, data.position.y, data.stoneColor); // 돌 놓은 순서 업데이트
+      changeTurn();
+      resetTimer();
+    });
+
+    // game over event
+    socket.on(EVENT_KEYS.GAME_OVER, ({ winner }: GameOverEvent['serverSend']) => {
+      alert(`${winner === BLACK ? '흑' : '백'} 승리, 게임을 초기화합니다.`);
+      setIsPlaying(false);
+      resetGame();
+    });
+
+    socket.on(EVENT_KEYS.ERROR, ({ message }: ErrorEvent['serverSend']) => {
+      alert(message || '에러가 발생했습니다.');
+    });
+
+    // 기본 캔버스 사이즈 초기화
+    const scaledWidth = window.innerWidth * CONFIG.RATIO;
+    setInitialCanvasSize(scaledWidth < CANVAS.WIDTH ? scaledWidth : CANVAS.WIDTH);
+
+    return () => {
+      socket.off(EVENT_KEYS.ASSIGN_STONE_COLOR);
+      socket.off(EVENT_KEYS.ROOM_INFO);
+      socket.off(EVENT_KEYS.SERVER_PLAY);
+      socket.off(EVENT_KEYS.GAME_OVER);
+      socket.off(EVENT_KEYS.GAME_RESET);
+      socket.disconnect();
+    };
+  }, []);
+
+  // 방 입장 및 퇴장처리
+  useEffectOnce(() => {
+    connectToRoom(Number(mode) === ROOM_MODE.CREATE, id!).catch((e) => {
+      if (e instanceof Error) {
+        alert(e.message);
+      }
+      router.back();
+    });
+
+    return () => leaveRoom(id!);
+  }, [id, mode, router]);
+
+  // 게임 시작시 타이머 동작
+  useEffect(() => {
+    if (isPlaying) {
+      toggleTimer();
+    } else {
+      resetTimer();
+    }
+  }, [isPlaying]);
+
+  // 턴이 바뀌면 타이머 리셋
+  useEffect(() => {
+    console.log('턴 바꼈따아');
+    if (isPlaying) {
+      resetTimer();
+      toggleTimer();
+    }
+  }, [isPlaying, turn]);
+
+  useEffect(() => {
+    if (isPlaying && roomInfo.count < 2) {
+      alert('상대방이 나가서 게임이 종료됩니다.');
+      resetGame();
+      toggleTimer();
+    }
+  }, [roomInfo.count, isPlaying]);
+
+  useEffect(() => {
+    socket.emit(EVENT_KEYS.GAME_READY, { ready });
+  }, [ready]);
+  console.log(time);
   return (
     <>
-      <header className={styles.header}>
-        입장한 인원: {roomInfo.count}, 방 이름: {roomInfo.id}
-      </header>
+      <GameInfoHeader roomId={roomInfo.id} userCount={roomInfo.count} />
       <OmokProvider user={myColor} sequence={sequence} geumsu={geumsu} turn={turn}>
         <CanvasProvider canvasSize={initialCanvasSize}>
           <BoardUI onClick={setSelectedPosition} />
-          {isPlaying && <ConfirmButton onClick={handleConfirm} disabled={!isMyTurn} />}
+          <ShadowBox>
+            {isPlaying && <ProgressBar time={time} turn={turn} />}
+            {isPlaying && (
+              <ConfirmButton onClick={handleConfirm} disabled={!isMyTurn}>
+                착수
+              </ConfirmButton>
+            )}
+            {!isPlaying && (
+              <ConfirmButton
+                type="button"
+                onClick={() => {
+                  setReady((prev) => !prev);
+                }}
+                disabled={roomInfo.count < 2}
+              >
+                {ready ? '취소' : '준비하기'}
+              </ConfirmButton>
+            )}
+          </ShadowBox>
         </CanvasProvider>
-        {/* <button type="button" onClick={() => socket.emit(EVENT_KEYS.GAME_RESET, { roomId: id })}>
-          reset
-        </button> */}
       </OmokProvider>
     </>
   );

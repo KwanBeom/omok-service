@@ -1,9 +1,8 @@
 .button {
   width: 100%;
   font-size: 1.8rem;
-  border-radius: 1rem;
+  border-radius: var(--sm-radius);
   padding: 2rem;
-  border: none;
   cursor: pointer;
   background-color: var(--main-color);
   color: white;

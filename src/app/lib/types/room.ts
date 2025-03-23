@@ -1,3 +1,3 @@
-export type CRETAE_ROOM = 1;
-export type JOIN_ROOM = 2;
-export type ROOM_MODE = CRETAE_ROOM | JOIN_ROOM;
+export type CreateRoom = 1;
+export type JoinRoom = 2;
+export type RoomMode = CreateRoom | JoinRoom;
