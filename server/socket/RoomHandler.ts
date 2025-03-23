@@ -45,6 +45,11 @@ class RoomHandler {
     return this.roomsMap.get(roomId || '')?.players;
   }
 
+  /** 소켓이 접속한 방의 아이디를 가져온다. */
+  getRoomId(socket: Socket) {
+    return this.roomIdMap.get(socket.id);
+  }
+
   /* 방 생성 */
   createRoom(roomId: string, socket: Socket, gameHandler: GameHandler) {
     const exist = this.roomsMap.has(roomId);
@@ -71,6 +76,10 @@ class RoomHandler {
     // map 셋팅
     const room = this.roomsMap.get(roomId);
 
+    if (room && room.players.length >= 2) {
+      throw new Error(ERROR_MESSAGES.FULL_ROOM);
+    }
+
     if (room) {
       room.players.push(socket);
       this.roomIdMap.set(socket.id, roomId);
@@ -94,15 +103,11 @@ class RoomHandler {
     const playerIndex = players.indexOf(socket);
     if (playerIndex !== undefined && playerIndex !== -1) {
       players.splice(playerIndex, 1); // 플레이어 제거
-      // 클라이언트에게 방 정보 갱신
+      // 클라이언트에게 방 정보 전송
       this.broadcast(socket, EVENT_KEYS.ROOM_INFO, {
         userCount: players.length,
         roomId,
       });
-      if (players.length === 0) {
-        this.deleteRoom(roomId);
-      }
-      console.log('방에 입장한 플레이어 수', players.length);
     }
     // 퇴장 성공
     return true;
@@ -116,7 +121,8 @@ class RoomHandler {
     }
   }
 
-  private deleteRoom(roomId: string) {
+  /** 방을 삭제하는 메서드 */
+  deleteRoom(roomId: string) {
     this.roomIdMap.delete(roomId);
     this.roomsMap.delete(roomId);
   }

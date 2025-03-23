@@ -1,10 +1,11 @@
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import RoomHandler from './RoomHandler';
 import {
   ClientPlayEvent,
   CreateRoomEvent,
   EVENT_KEYS,
   JoinRoomEvent,
+  ReadyEvent,
   RoomInfoEvent,
 } from '../constants/events';
 import GameHandler from './GameHandler';
@@ -43,28 +44,12 @@ const setupSocketHandlers = (io: Server) => {
         // 방에 입장한 클라이언트들에게 방 정보 전송
         const roomInfoEventData: RoomInfoEvent['serverSend'] = { userCount, roomId };
         roomHandler.broadcast(socket, EVENT_KEYS.ROOM_INFO, roomInfoEventData);
-        console.log('입장 정보', roomInfoEventData);
       } catch (e) {
         if (e instanceof Error) {
           const joinRoomData: JoinRoomEvent['serverSend'] = { success: false, message: e.message };
           socket.emit(EVENT_KEYS.JOIN_ROOM, joinRoomData);
         }
       }
-
-      if (roomHandler.getUserCount(socket) === 2) {
-        const gameHandler = roomHandler.getGameHandler(socket);
-        const players = roomHandler.getUsers(socket);
-
-        if (gameHandler && players) {
-          gameHandler.initGame(players as [Socket, Socket]);
-        }
-      }
-    });
-
-    // 방 퇴장 요청 받는 이벤트 리스너
-    socket.on(EVENT_KEYS.LEAVE_ROOM, () => {
-      roomHandler.leaveRoom(socket);
-      socket.disconnect();
     });
 
     // 게임 이벤트 받아 게임 핸들러에게 전달
@@ -83,7 +68,14 @@ const setupSocketHandlers = (io: Server) => {
       if (gameHandler) {
         // 게임 초기화 하고 새로 셋팅
         gameHandler.resetGame();
-        gameHandler.initGame(roomHandler.getUsers(socket) as [Socket, Socket]);
+      }
+    });
+
+    // 준비 이벤트 받아 게임 시작
+    socket.on(EVENT_KEYS.GAME_READY, (data: ReadyEvent['clientSend']) => {
+      const gameHandler = roomHandler.getGameHandler(socket);
+      if (gameHandler) {
+        gameHandler.readyGame(socket, data.ready);
       }
     });
 
@@ -92,6 +84,11 @@ const setupSocketHandlers = (io: Server) => {
       roomHandler.leaveRoom(socket);
       const gameHandler = roomHandler.getGameHandler(socket);
       if (gameHandler) gameHandler.resetGame();
+      if (roomHandler.getUserCount(socket) === 0) {
+        const roomId = roomHandler.getRoomId(socket);
+        if (!roomId) return;
+        roomHandler.deleteRoom(roomId); // 인원이 0명이고 방이 있는 경우 방 삭제
+      }
     });
   });
 };
