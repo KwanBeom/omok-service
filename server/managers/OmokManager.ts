@@ -39,7 +39,7 @@ class OmokGameManager {
 
   playMove(socket: Socket, position: { x: number; y: number }) {
     const color = this.getPlayerColor(socket);
-    if (!this.gameCore.isValidTurn(color === 1 ? 'black' : 'white')) {
+    if (!this.gameCore.isValidTurn(color)) {
       socket.emit('ERROR', 'Not your turn');
       return;
     }
