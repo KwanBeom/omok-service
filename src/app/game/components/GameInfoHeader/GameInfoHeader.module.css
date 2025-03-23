@@ -1,0 +1,48 @@
+.header {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.header h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 플레이어 정보 스타일 */
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.black {
+  background-color: black;
+  color: white;
+}
+
+.white {
+  background-color: lightgray;
+  color: black;
+}
+
+.text {
+  font-size: 14px;
+  font-weight: 500;
+}
