@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -22,7 +22,7 @@
       "@/*": ["./*"]
     }
   },
-  "ts-node": { "esm": true, "experimentalSpecifierResolution": "node" },
+  "ts-node": { "esm": true, "experimentalSpecifierResolution": "node", "moduleResolution": "node" },
   "include": [
     "next-env.d.ts",
     "**/*.ts",

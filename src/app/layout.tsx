@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 import styles from './layout.module.css';
@@ -18,7 +19,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       </head>
       <body>
-        <div className={styles.wrapper}>{children}</div>
+        <Suspense fallback={<div className={styles.loading}>Loading...</div>}>
+          <div className={styles.wrapper}>{children}</div>
+        </Suspense>
       </body>
     </html>
   );

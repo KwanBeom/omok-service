@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Modal from './components/Modal';
 import { CreateRoom, JoinRoom } from './lib/types/room';
 import { ROOM_ID, ROOM_MODE } from './lib/constants/room';
 import ROUTES from './lib/routes';
 import styles from './page.module.css';
+import Modal from './components/modal';
 
 export default function Home() {
   // 입장 모드 [1]: 생성, [2]: 입장

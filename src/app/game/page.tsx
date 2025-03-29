@@ -199,7 +199,6 @@ export default function Page() {
 
   // 턴이 바뀌면 타이머 리셋
   useEffect(() => {
-    console.log('턴 바꼈따아');
     if (isPlaying) {
       resetTimer();
       toggleTimer();
@@ -217,7 +216,7 @@ export default function Page() {
   useEffect(() => {
     socket.emit(EVENT_KEYS.GAME_READY, { ready });
   }, [ready]);
-  console.log(time);
+
   return (
     <>
       <GameInfoHeader roomId={roomInfo.id} userCount={roomInfo.count} />
