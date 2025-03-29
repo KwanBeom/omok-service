@@ -1,6 +1,6 @@
 import React from 'react';
 import ShadowBox from '@/src/app/components/ShadowBox';
-import styles from './gameInfoHeader.module.css';
+import styles from './GameInfoHeader.module.css';
 
 function PlayerInfo({ userCount }: { userCount: number }) {
   return (
