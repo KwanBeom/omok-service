@@ -1,0 +1,23 @@
+
+> omok-service@0.1.0 start
+> concurrently "npm run start-server" "npm run start-next"
+
+[0] 
+[0] > omok-service@0.1.0 start-server
+[0] > NODE_ENV=production tsx server/index.ts
+[0] 
+[1] 
+[1] > omok-service@0.1.0 start-next
+[1] > next start -H 0.0.0.0 -p 3001
+[1] 
+[1]   ▲ Next.js 14.2.26
+[1]   - Local:        http://localhost:3001
+[1]   - Network:      http://0.0.0.0:3001
+[1] 
+[1]  ✓ Starting...
+[1]  ⚠ Invalid next.config.mjs options detected: 
+[1]  ⚠     Expected object, received string at "serverRuntimeConfig"
+[1]  ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+[1]  ✓ Ready in 913ms
+[1] npm run start-next exited with code SIGINT
+[0] npm run start-server exited with code SIGINT
