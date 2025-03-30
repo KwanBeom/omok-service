@@ -4,12 +4,12 @@ import {
   ClientPlayEvent,
   CreateRoomEvent,
   EVENT_KEYS,
+  GameOverEvent,
   JoinRoomEvent,
   ReadyEvent,
   RoomInfoEvent,
 } from '../constants/events';
 import GameHandler from './GameHandler';
-// import OmokGameManager from '../managers/OmokManager';
 
 const setupSocketHandlers = (io: Server) => {
   const roomHandler = new RoomHandler(io);
@@ -58,7 +58,8 @@ const setupSocketHandlers = (io: Server) => {
       if (!gameHandler) return;
       const gameOver = gameHandler.playGame(data);
       if (gameOver) {
-        roomHandler.broadcast(socket, EVENT_KEYS.GAME_OVER);
+        const gameOverRes: GameOverEvent['serverSend'] = { winner: gameHandler.getWinner() };
+        roomHandler.broadcast(socket, EVENT_KEYS.GAME_OVER, gameOverRes);
       }
     });
 

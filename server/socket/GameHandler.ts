@@ -29,6 +29,11 @@ class GameHandler {
     return this.players.length;
   }
 
+  /** 승리한 유저 반환 */
+  getWinner() {
+    return this.omok.getCurrentTurn() === BLACK ? WHITE : BLACK;
+  }
+
   /** 게임 초기화, 플레이어에게 돌 색깔 할당 */
   initGame() {
     const colors: STONE[] = getShuffledStones();
