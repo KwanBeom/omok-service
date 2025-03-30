@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import RoomHandler from './RoomHandler';
+import GameHandler from './GameHandler';
 import {
   ClientPlayEvent,
   CreateRoomEvent,
@@ -9,11 +10,9 @@ import {
   ReadyEvent,
   RoomInfoEvent,
 } from '../constants/events';
-import GameHandler from './GameHandler';
 
 const setupSocketHandlers = (io: Server) => {
   const roomHandler = new RoomHandler(io);
-
   // 클라이언트가 연결될 때마다 아래 구문이 실행, on은 이벤트를 받도록 대기
   io.on('connection', (socket) => {
     // 방 생성 처리하고 클라이언트에 데이터 전송

@@ -152,8 +152,8 @@ export default function Page() {
     });
 
     // game over event
-    socket.on(EVENT_KEYS.GAME_OVER, ({ winner }: GameOverEvent['serverSend']) => {
-      alert(`${winner === BLACK ? '흑' : '백'} 승리, 게임을 초기화합니다.`);
+    socket.on(EVENT_KEYS.GAME_OVER, (data: GameOverEvent['serverSend']) => {
+      alert(`${data.winner === BLACK ? '흑' : '백'} 승리, 게임을 초기화합니다.`);
       setIsPlaying(false);
       resetGame();
     });
