@@ -66,24 +66,25 @@ function PositionHighlight({ position }: { position?: Position }) {
       });
     };
 
-    // 하이라이트 제거 (외곽선 잔상 없애기)
-    // 하이라이트 제거 (외곽선 잔상 없애기)
+    // 하이라이트 제거 (보드 색상으로 덮어쓰기)
     const removeHighlight = (ctx: CanvasRenderingContext2D, p: Position, cellSize: number) => {
       const { x, y } = getBoardCoordinate(p, cellSize, boardPadding);
       const triangleCoordinates = getTriangleCoordinates(cellSize);
 
-      // Add a buffer for the stroke width
-      const strokeBuffer = LINE_WIDTH.HIGHLIGHT;
-
-      // 하이라이트가 그려졌던 영역을 정확히 클리어
+      // 하이라이트 영역을 보드 색상으로 덮어쓰기
       triangleCoordinates.forEach((vertices) => {
-        const minX = Math.min(vertices[0].x, vertices[1].x, vertices[2].x) + x - strokeBuffer;
-        const minY = Math.min(vertices[0].y, vertices[1].y, vertices[2].y) + y - strokeBuffer;
-        const maxX = Math.max(vertices[0].x, vertices[1].x, vertices[2].x) + x + strokeBuffer;
-        const maxY = Math.max(vertices[0].y, vertices[1].y, vertices[2].y) + y + strokeBuffer;
+        const minX =
+          Math.min(vertices[0].x, vertices[1].x, vertices[2].x) + x - LINE_WIDTH.HIGHLIGHT;
+        const minY =
+          Math.min(vertices[0].y, vertices[1].y, vertices[2].y) + y - LINE_WIDTH.HIGHLIGHT;
+        const maxX =
+          Math.max(vertices[0].x, vertices[1].x, vertices[2].x) + x + LINE_WIDTH.HIGHLIGHT;
+        const maxY =
+          Math.max(vertices[0].y, vertices[1].y, vertices[2].y) + y + LINE_WIDTH.HIGHLIGHT;
 
-        // 그 영역만 클리어
-        ctx.clearRect(minX, minY, maxX - minX, maxY - minY);
+        // 영역을 보드 색상으로 채우기
+        ctx.fillStyle = COLOR.BOARD;
+        ctx.fillRect(minX, minY, maxX - minX, maxY - minY);
       });
     };
 
