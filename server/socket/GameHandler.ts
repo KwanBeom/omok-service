@@ -48,6 +48,7 @@ class GameHandler {
   /** 게임 리셋 */
   resetGame() {
     this.omok = new Omok();
+    this.clearTimer();
   }
 
   /** 게임 진행 */
