@@ -145,7 +145,8 @@ export default function Page() {
 
     // 오목 진행 이후 업데이트 된 관련 상태 전달받음
     socket.on(EVENT_KEYS.SERVER_PLAY, (data: ServerPlayEvent['serverSend']) => {
-      setGeumsu(formatGeumsuData(data.geumsu)); // 금수 설정
+     console.log(data);
+	 setGeumsu(formatGeumsuData(data.geumsu)); // 금수 설정
       updateSequence(data.position.x, data.position.y, data.stoneColor); // 돌 놓은 순서 업데이트
       changeTurn();
       resetTimer();
