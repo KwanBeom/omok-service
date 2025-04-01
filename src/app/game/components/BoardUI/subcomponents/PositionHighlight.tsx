@@ -45,12 +45,11 @@ function PositionHighlight({ position }: { position?: Position }) {
   };
 
   useEffect(() => {
-    if (!context && !context) return;
+    if (!context) return;
 
     // 하이라이트 그리는 함수
     const drawHighlight = (ctx: CanvasRenderingContext2D, p: Position, cellSize: number) => {
       const { x, y } = getBoardCoordinate(p, cellSize, boardPadding);
-      // 작은 삼각형들 좌표
       const triangleCoordinates = getTriangleCoordinates(cellSize);
 
       triangleCoordinates.forEach((vertices) => {
@@ -59,35 +58,32 @@ function PositionHighlight({ position }: { position?: Position }) {
         ctx.lineTo(x + vertices[1].x, y + vertices[1].y);
         ctx.lineTo(x + vertices[2].x, y + vertices[2].y);
         ctx.closePath();
-        // 삼각형 내부 채우기
         ctx.fillStyle = COLOR.HIGHLIGHT.FILL;
         ctx.fill();
-        // 외곽선 스타일 지정 및 그리기
         ctx.lineWidth = LINE_WIDTH.HIGHLIGHT;
         ctx.strokeStyle = COLOR.HIGHLIGHT.STROKE;
         ctx.stroke();
       });
     };
 
+    // 하이라이트 제거 (외곽선 잔상 없애기)
+    // 하이라이트 제거 (외곽선 잔상 없애기)
     const removeHighlight = (ctx: CanvasRenderingContext2D, p: Position, cellSize: number) => {
       const { x, y } = getBoardCoordinate(p, cellSize, boardPadding);
-      // 작은 삼각형들 좌표
       const triangleCoordinates = getTriangleCoordinates(cellSize);
 
-      triangleCoordinates.forEach((vertices) => {
-        ctx.beginPath();
-        ctx.moveTo(x + vertices[0].x, y + vertices[0].y);
-        ctx.lineTo(x + vertices[1].x, y + vertices[1].y);
-        ctx.lineTo(x + vertices[2].x, y + vertices[2].y);
+      // Add a buffer for the stroke width
+      const strokeBuffer = LINE_WIDTH.HIGHLIGHT;
 
-        ctx.closePath();
-        // 채우기
-        ctx.fillStyle = COLOR.BOARD;
-        ctx.fill();
-        // 외곽선 스타일 지정 및 그리기
-        ctx.lineWidth = LINE_WIDTH.BOARD;
-        ctx.strokeStyle = COLOR.BOARD;
-        ctx.stroke();
+      // 하이라이트가 그려졌던 영역을 정확히 클리어
+      triangleCoordinates.forEach((vertices) => {
+        const minX = Math.min(vertices[0].x, vertices[1].x, vertices[2].x) + x - strokeBuffer;
+        const minY = Math.min(vertices[0].y, vertices[1].y, vertices[2].y) + y - strokeBuffer;
+        const maxX = Math.max(vertices[0].x, vertices[1].x, vertices[2].x) + x + strokeBuffer;
+        const maxY = Math.max(vertices[0].y, vertices[1].y, vertices[2].y) + y + strokeBuffer;
+
+        // 그 영역만 클리어
+        ctx.clearRect(minX, minY, maxX - minX, maxY - minY);
       });
     };
 
@@ -100,12 +96,14 @@ function PositionHighlight({ position }: { position?: Position }) {
 
     // 하이라이트 그리기 + 이전 좌표 저장
     if (position && isValidPosition(position, BOARD.SIZE)) {
+      // 이전 하이라이트가 있으면 그 영역을 지운다
+      if (prev && !isSamePosition(prev, position)) {
+        removeHighlight(context, prev, cellSize);
+      }
+
+      // 새 하이라이트를 그린다
       drawHighlight(context, position, cellSize);
       setPrev(position);
-    }
-
-    if (prev && position && !isSamePosition(prev, position)) {
-      removeHighlight(context, prev, cellSize);
     }
   }, [position, context, boardPadding]);
 
