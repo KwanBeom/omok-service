@@ -66,28 +66,6 @@ function PositionHighlight({ position }: { position?: Position }) {
       });
     };
 
-    // 하이라이트 제거 (보드 색상으로 덮어쓰기)
-    const removeHighlight = (ctx: CanvasRenderingContext2D, p: Position, cellSize: number) => {
-      const { x, y } = getBoardCoordinate(p, cellSize, boardPadding);
-      const triangleCoordinates = getTriangleCoordinates(cellSize);
-
-      // 하이라이트 영역을 보드 색상으로 덮어쓰기
-      triangleCoordinates.forEach((vertices) => {
-        const minX =
-          Math.min(vertices[0].x, vertices[1].x, vertices[2].x) + x - LINE_WIDTH.HIGHLIGHT;
-        const minY =
-          Math.min(vertices[0].y, vertices[1].y, vertices[2].y) + y - LINE_WIDTH.HIGHLIGHT;
-        const maxX =
-          Math.max(vertices[0].x, vertices[1].x, vertices[2].x) + x + LINE_WIDTH.HIGHLIGHT;
-        const maxY =
-          Math.max(vertices[0].y, vertices[1].y, vertices[2].y) + y + LINE_WIDTH.HIGHLIGHT;
-
-        // 영역을 보드 색상으로 채우기
-        ctx.fillStyle = COLOR.BOARD;
-        ctx.fillRect(minX, minY, maxX - minX, maxY - minY);
-      });
-    };
-
     const { cellSize } = calculateSizes(
       context.canvas.offsetWidth,
       BOARD.SIZE,
@@ -97,9 +75,9 @@ function PositionHighlight({ position }: { position?: Position }) {
 
     // 하이라이트 그리기 + 이전 좌표 저장
     if (position && isValidPosition(position, BOARD.SIZE)) {
-      // 이전 하이라이트가 있으면 그 영역을 지운다
+      // 이전 하이라이트가 있으면 캔버스 전체 지우기
       if (prev && !isSamePosition(prev, position)) {
-        removeHighlight(context, prev, cellSize);
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
       }
 
       // 새 하이라이트를 그린다
