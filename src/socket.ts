@@ -2,6 +2,8 @@
 
 import { io } from 'socket.io-client';
 
-const socket = io("3.34.179.122:3000");
+const socket = io("https://gomoku.asia", {
+	path: "/socket.io",
+});
 
 export default socket;
